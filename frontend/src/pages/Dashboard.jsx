@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, DollarSign, Clock, Briefcase, Users } from "lucide-react";
 import {
@@ -9,8 +10,11 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import InvoiceWizard from "@/components/InvoiceWizard";
 
 const Dashboard = () => {
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
+
   const stats = [
     {
       title: "Total Revenue",
@@ -80,123 +84,134 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-slate-500">Welcome back, Tomiwa 🎉</p>
-        </div>
-        <button className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto">
-          + New Invoice
-        </button>
-      </div>
-
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-slate-500">
-                {stat.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg ${stat.iconBg}`}>
-                <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
-              <div className="flex items-center pt-1">
-                <span className="text-emerald-600 text-xs font-medium flex items-center">
-                  <ArrowUp className="h-3 w-3 mr-1" />
-                  {stat.change}
-                </span>
-                <span className="text-slate-400 text-xs ml-2">from last month</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Chart */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-slate-900">Revenue Overview</h3>
-          <span className="text-xs text-slate-400">Last 6 months</span>
-        </div>
-        <ResponsiveContainer width="100%" height={250}>
-          <LineChart data={revenueData}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-            <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
-            <YAxis
-              stroke="#94a3b8"
-              fontSize={12}
-              tickFormatter={(value) => `₦${value / 1000}K`}
-            />
-            <Tooltip
-              formatter={(value) => [`₦${value.toLocaleString()}`, "Revenue"]}
-              contentStyle={{
-                borderRadius: "8px",
-                border: "1px solid #e2e8f0",
-                background: "white",
-              }}
-            />
-            <Line
-              type="monotone"
-              dataKey="revenue"
-              stroke="#059669"
-              strokeWidth={3}
-              dot={{ fill: "#059669", strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6 }}
-            />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      {/* Recent Invoices */}
-      <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="font-semibold text-slate-900">Recent Invoices</h3>
-          <button className="text-emerald-600 text-sm font-medium hover:underline">
-            View all
+    <>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-slate-500">Welcome back, Tomiwa 🎉</p>
+          </div>
+          <button
+            onClick={() => setIsWizardOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+          >
+            + New Invoice
           </button>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="text-slate-500 border-b">
-              <tr>
-                <th className="text-left py-3 font-medium">Invoice</th>
-                <th className="text-left py-3 font-medium">Client</th>
-                <th className="text-left py-3 font-medium">Date</th>
-                <th className="text-left py-3 font-medium">Amount</th>
-                <th className="text-left py-3 font-medium">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentInvoices.map((invoice, index) => (
-                <tr key={index} className="border-b last:border-0 hover:bg-slate-50 transition">
-                  <td className="py-3 font-medium text-slate-900">{invoice.id}</td>
-                  <td className="py-3 text-slate-700">{invoice.client}</td>
-                  <td className="py-3 text-slate-500">{invoice.date}</td>
-                  <td className="py-3 font-medium text-slate-900">{invoice.amount}</td>
-                  <td className="py-3">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-medium ${
-                        invoice.status === "Paid"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
-                    >
-                      {invoice.status}
-                    </span>
-                  </td>
+
+        {/* KPI Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stats.map((stat, index) => (
+            <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-slate-500">
+                  {stat.title}
+                </CardTitle>
+                <div className={`p-2 rounded-lg ${stat.iconBg}`}>
+                  <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                <div className="flex items-center pt-1">
+                  <span className="text-emerald-600 text-xs font-medium flex items-center">
+                    <ArrowUp className="h-3 w-3 mr-1" />
+                    {stat.change}
+                  </span>
+                  <span className="text-slate-400 text-xs ml-2">from last month</span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Chart */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-slate-900">Revenue Overview</h3>
+            <span className="text-xs text-slate-400">Last 6 months</span>
+          </div>
+          <ResponsiveContainer width="100%" height={250}>
+            <LineChart data={revenueData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
+              <YAxis
+                stroke="#94a3b8"
+                fontSize={12}
+                tickFormatter={(value) => `₦${value / 1000}K`}
+              />
+              <Tooltip
+                formatter={(value) => [`₦${value.toLocaleString()}`, "Revenue"]}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid #e2e8f0",
+                  background: "white",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="revenue"
+                stroke="#059669"
+                strokeWidth={3}
+                dot={{ fill: "#059669", strokeWidth: 2, r: 4 }}
+                activeDot={{ r: 6 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Recent Invoices */}
+        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-semibold text-slate-900">Recent Invoices</h3>
+            <button className="text-emerald-600 text-sm font-medium hover:underline">
+              View all
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="text-slate-500 border-b">
+                <tr>
+                  <th className="text-left py-3 font-medium">Invoice</th>
+                  <th className="text-left py-3 font-medium">Client</th>
+                  <th className="text-left py-3 font-medium">Date</th>
+                  <th className="text-left py-3 font-medium">Amount</th>
+                  <th className="text-left py-3 font-medium">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {recentInvoices.map((invoice, index) => (
+                  <tr key={index} className="border-b last:border-0 hover:bg-slate-50 transition">
+                    <td className="py-3 font-medium text-slate-900">{invoice.id}</td>
+                    <td className="py-3 text-slate-700">{invoice.client}</td>
+                    <td className="py-3 text-slate-500">{invoice.date}</td>
+                    <td className="py-3 font-medium text-slate-900">{invoice.amount}</td>
+                    <td className="py-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          invoice.status === "Paid"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {invoice.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Invoice Wizard Modal */}
+      <InvoiceWizard
+        isOpen={isWizardOpen}
+        onClose={() => setIsWizardOpen(false)}
+      />
+    </>
   );
 };
 
