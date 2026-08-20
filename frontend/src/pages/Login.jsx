@@ -27,6 +27,7 @@ export default function Login() {
     <main className="min-h-screen grid place-items-center bg-slate-50 p-6">
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-5 rounded-xl bg-white p-8 shadow-sm border border-slate-200">
         <div>
+          <img src="/logo.jpeg" alt="SoloHub" className="mx-auto mb-6 h-24 w-full object-contain" />
           <h1 className="text-2xl font-bold text-slate-900">Welcome back</h1>
           <p className="mt-1 text-slate-500">Sign in to your SoloHub account.</p>
         </div>

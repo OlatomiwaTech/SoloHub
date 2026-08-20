@@ -24,7 +24,7 @@ const Layout = ({ children }) => {
       {/* Sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 bg-slate-900 text-white">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-emerald-400">SoloHub</h1>
+          <img src="/logo.jpeg" alt="SoloHub" className="h-16 w-full object-contain object-left" />
           <p className="text-xs text-slate-400 mt-1">Freelance command center</p>
         </div>
         <nav className="flex-1 px-4 space-y-1">
@@ -63,7 +63,7 @@ const Layout = ({ children }) => {
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-slate-200 p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
-          <h1 className="text-xl font-bold text-emerald-600">SoloHub</h1>
+          <img src="/logo.jpeg" alt="SoloHub" className="h-10 w-28 object-contain object-left" />
           <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-bold text-white">
             T
           </div>

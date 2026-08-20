@@ -3,8 +3,9 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
+import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
-import Clients from './pages/Clients'; // ✅ Add this import
+import Clients from './pages/Clients';
 import Projects from './pages/Projects';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -15,20 +16,11 @@ function App() {
       <Toaster position="top-right" richColors />
       <Routes>
         {/* Public routes */}
+        <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* Protected routes */}
-        <Route
-          path="/"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Dashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
         <Route
           path="/dashboard"
           element={
@@ -39,7 +31,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* ✅ Add Clients route */}
         <Route
           path="/clients"
           element={
