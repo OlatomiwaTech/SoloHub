@@ -7,7 +7,7 @@ import Landing from './pages/Landing';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Projects from './pages/Projects';
-import Invoices from './pages/Invoices'; // ✅ Add this import
+import Invoices from './pages/Invoices';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -52,7 +52,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-        {/* ✅ Add Invoices route */}
         <Route
           path="/invoices"
           element={

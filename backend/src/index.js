@@ -19,27 +19,13 @@ app.use(cors({
   credentials: true,
 }));
 
-// Webhook routes (commented out for now)
-// app.use('/api/webhooks', require('./routes/webhook.routes'));
-
 app.use(express.json());
 
-// ============================================
-// ROUTES
-// ============================================
-// ... other imports and middleware
-
-// ============================================
-// ROUTES
-// ============================================
+// API routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/clients', require('./routes/client.routes'));
 app.use('/api/projects', require('./routes/project.routes'));
-app.use('/api/invoices', require('./routes/invoice.routes')); // ✅ Add this line
-
-// ... rest of the file
-
-// ... rest of the file
+app.use('/api/invoices', require('./routes/invoice.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
