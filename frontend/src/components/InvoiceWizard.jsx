@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form"; // ✅ Add useWatch
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -50,7 +50,7 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
     register,
     handleSubmit,
     setValue,
-    watch,
+    control, // ✅ Add control
     formState: { errors },
     reset,
   } = useForm({
@@ -64,8 +64,16 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
     },
   });
 
-  const clientId = watch("clientId");
-  const projectId = watch("projectId");
+  // ✅ Use useWatch instead of watch()
+  const clientId = useWatch({
+    control,
+    name: "clientId",
+  });
+
+  const projectId = useWatch({
+    control,
+    name: "projectId",
+  });
 
   const filteredProjects = mockProjects.filter(
     (project) => project.clientId === clientId
