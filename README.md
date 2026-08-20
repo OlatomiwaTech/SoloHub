@@ -1,6 +1,6 @@
 <div align="center">
-  <!-- Optional: Replace with a screenshot of your dashboard later -->
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6eW55b3R6eW55b3R6eW55b3R6eW55b3R6eW55b3R6eW55b3R6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif" width="100%" alt="SoloHub Banner" style="border-radius: 8px;" />
+  <!-- Replace the src below with a screenshot of your SoloHub dashboard once you have one! -->
+  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExM3R6eW55b3R6eW55b3R6eW55b3R6eW55b3R6eW55b3R6eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7TKSjRrfIPjeiVyM/giphy.gif" width="100%" alt="SoloHub Dashboard Banner" style="border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);" />
   
   <h1>🚀 SoloHub</h1>
   <h3>The Freelancer's Command Center for Africa 🌍</h3>
@@ -66,3 +66,13 @@
 ---
 
 ## 🏗️ Architecture
+```mermaid
+graph TD
+    A[Client Browser] -->|HTTPS| B[React Frontend - Vite]
+    B --> C[shadcn/ui + Tailwind]
+    B --> D[React Router + Hook Form]
+    
+    B -->|REST API / JWT| G[Express Backend]
+    G --> H[Prisma ORM]
+    H --> I[(PostgreSQL)]
+    G --> J[Paystack Webhook]
