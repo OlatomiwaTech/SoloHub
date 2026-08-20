@@ -2,38 +2,37 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'https://yourdomain.com' 
-    : 'http://localhost:5173',
+  origin: process.env.NODE_ENV === 'production'
+    ? 'https://yourdomain.com'
+    : (origin, callback) => {
+        if (!origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)) {
+          return callback(null, true);
+        }
+        return callback(new Error('Origin not allowed by CORS'));
+      },
   credentials: true,
 }));
 
-// ============================================
-// ⚠️ Webhook routes must come BEFORE express.json()
-// TODO: Uncomment when we implement Paystack webhooks
-// ============================================
+// Webhook routes (commented out for now)
 // app.use('/api/webhooks', require('./routes/webhook.routes'));
 
-// Regular JSON middleware for all other routes
 app.use(express.json());
 
 // ============================================
-// AUTH ROUTES
+// ROUTES
 // ============================================
 app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/clients', require('./routes/client.routes')); // ✅ Added this line
 
 // ============================================
 // OTHER ROUTES (will add later)
 // ============================================
-// app.use('/api/clients', require('./routes/client.routes'));
 // app.use('/api/projects', require('./routes/project.routes'));
 // app.use('/api/invoices', require('./routes/invoice.routes'));
 
@@ -46,7 +45,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Error handling middleware
+// Error handling
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({ 
@@ -63,12 +62,16 @@ app.use((req, res) => {
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 SoloHub backend running on http://localhost:${PORT}`);
   console.log(`📝 Available endpoints:`);
-  console.log(`   POST /api/auth/register - Register new user`);
-  console.log(`   POST /api/auth/login    - Login user`);
-  console.log(`   GET  /api/auth/me       - Get current user (protected)`);
-  console.log(`   GET  /api/health        - Health check`);
+  console.log(`   POST /api/auth/register  - Register new user`);
+  console.log(`   POST /api/auth/login     - Login user`);
+  console.log(`   GET  /api/auth/me        - Get current user (protected)`);
+  console.log(`   GET  /api/clients        - Get all clients (protected)`);
+  console.log(`   POST /api/clients        - Create client (protected)`);
+  console.log(`   GET  /api/clients/:id    - Get client by ID (protected)`);
+  console.log(`   PUT  /api/clients/:id    - Update client (protected)`);
+  console.log(`   DELETE /api/clients/:id  - Delete client (protected)`);
+  console.log(`   GET  /api/health         - Health check`);
 });
