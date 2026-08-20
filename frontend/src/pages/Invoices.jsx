@@ -163,7 +163,7 @@ const Invoices = () => {
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
-    }).format(amount);
+    }).format(Number(amount) || 0);
   };
 
   const formatDate = (date) => {

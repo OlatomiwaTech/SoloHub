@@ -92,20 +92,17 @@ const createClient = async (req, res) => {
     const userId = req.user.id;
 
     // Validate required fields
-    if (!email || !name) {
+    if (!name) {
       return res.status(400).json({
         success: false,
-        message: 'Email and name are required',
+        message: 'Name is required',
       });
     }
 
     // Check if client with this email already exists for this user
-    const existingClient = await prisma.client.findFirst({
-      where: {
-        email,
-        userId,
-      },
-    });
+    const existingClient = email
+      ? await prisma.client.findUnique({ where: { userId_email: { userId, email } } })
+      : null;
 
     if (existingClient) {
       return res.status(409).json({

@@ -174,7 +174,7 @@ const createProject = async (req, res) => {
         name,
         description,
         status: status || 'ACTIVE',
-        rate: rate ? parseFloat(rate) : null,
+        rate: rate ? parseFloat(rate).toFixed(2) : null,
         clientId,
         userId,
       },
@@ -251,7 +251,7 @@ const updateProject = async (req, res) => {
         name: name || existingProject.name,
         description: description !== undefined ? description : existingProject.description,
         status: status || existingProject.status,
-        rate: rate !== undefined ? (rate ? parseFloat(rate) : null) : existingProject.rate,
+        rate: rate !== undefined ? (rate ? parseFloat(rate).toFixed(2) : null) : existingProject.rate,
         clientId: clientId || existingProject.clientId,
       },
       include: {

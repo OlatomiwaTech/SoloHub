@@ -28,7 +28,7 @@ model User {
 
 model Client {
   id        String   @id @default(uuid())
-  email     String   @unique
+  email     String?
   name      String
   phone     String?
   address   String?
@@ -38,6 +38,8 @@ model Client {
   updatedAt DateTime @updatedAt
 
   projects  Project[]
+
+  @@unique([userId, email])
 }
 
 model Project {
@@ -45,7 +47,7 @@ model Project {
   name        String
   description String?
   status      String   @default("ACTIVE") // ACTIVE, ON_HOLD, COMPLETED, CANCELLED
-  rate        Float?   // Hourly or fixed rate
+  rate        Decimal? @db.Decimal(10, 2) // Hourly or fixed rate
   clientId    String
   client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
   userId      String
@@ -59,7 +61,7 @@ model Project {
 model Invoice {
   id          String   @id @default(uuid())
   number      String   @unique
-  amount      Float
+  amount      Decimal  @db.Decimal(10, 2)
   status      String   @default("DRAFT") // DRAFT, SENT, PAID, OVERDUE, CANCELLED
   dueDate     DateTime
   issueDate   DateTime @default(now())

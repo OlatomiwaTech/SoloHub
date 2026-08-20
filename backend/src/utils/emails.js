@@ -21,7 +21,7 @@ const sendInvoiceEmail = async (to, invoice, pdfBuffer) => {
         <p>Dear ${invoice.client?.name},</p>
         <p>Please find your invoice <strong>#${invoice.number}</strong> attached.</p>
         <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin: 20px 0;">
-          <p><strong>Amount Due:</strong> ₦${invoice.amount.toLocaleString()}</p>
+          <p><strong>Amount Due:</strong> NGN ${Number(invoice.amount).toLocaleString()}</p>
           <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
           <p><strong>Project:</strong> ${invoice.project?.name}</p>
         </div>

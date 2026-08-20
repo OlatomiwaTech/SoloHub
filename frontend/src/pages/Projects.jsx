@@ -282,7 +282,7 @@ const Projects = () => {
                       </span>
                     </TableCell>
                     <TableCell className="text-slate-700">
-                      {project.rate ? `₦${project.rate.toLocaleString()}` : '-'}
+                      {project.rate ? `₦${Number(project.rate).toLocaleString()}` : '-'}
                     </TableCell>
                     <TableCell>
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">

@@ -32,7 +32,7 @@ const Analytics = () => {
           const date = new Date(inv.createdAt);
           const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
           if (!months[monthKey]) months[monthKey] = 0;
-          months[monthKey] += inv.amount;
+          months[monthKey] += Number(inv.amount) || 0;
         });
 
         const monthlyData = Object.entries(months)
@@ -85,7 +85,7 @@ const Analytics = () => {
             <div>
               <p className="text-sm text-slate-500">Total Revenue</p>
               <p className="text-2xl font-bold text-slate-900">
-                ₦{analytics.revenue.total.toLocaleString()}
+                ₦{Number(analytics.revenue.total).toLocaleString()}
               </p>
             </div>
             <div className="w-12 h-12 bg-emerald-50 rounded-lg flex items-center justify-center">

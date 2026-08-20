@@ -487,7 +487,7 @@ const onSubmit = async (data) => {
                     <div className="flex justify-between py-1 border-b border-slate-200">
                       <span className="text-slate-500">Amount:</span>
                       <span className="font-bold text-emerald-600">
-                        ₦{generatedInvoice.amount.toLocaleString()}
+                        NGN {Number(generatedInvoice.amount).toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between py-1">

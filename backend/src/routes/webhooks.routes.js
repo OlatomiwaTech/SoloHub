@@ -140,9 +140,9 @@ async function handleChargeSuccess(data) {
 
     // Verify the amount matches (security check)
     const amountPaid = data.amount / 100; // Paystack amounts are in kobo (smallest currency unit)
-    if (Math.abs(amountPaid - invoice.amount) > 0.01) {
+    if (Math.abs(amountPaid - Number(invoice.amount)) > 0.01) {
       console.error(
-        `❌ Amount mismatch! Expected ₦${invoice.amount}, got ₦${amountPaid}`
+        `❌ Amount mismatch! Expected ₦${Number(invoice.amount)}, got ₦${amountPaid}`
       );
       // Log for manual investigation but still mark as paid if close
       // In production, you might want to flag this for review

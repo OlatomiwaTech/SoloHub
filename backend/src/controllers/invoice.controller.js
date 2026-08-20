@@ -30,10 +30,11 @@ const getInvoices = async (req, res) => {
       include: invoiceInclude,
     });
     const totals = invoices.reduce((summary, invoice) => {
-      summary.total += invoice.amount;
-      if (invoice.status === 'PAID') summary.paid += invoice.amount;
-      if (invoice.status === 'SENT' || invoice.status === 'DRAFT') summary.pending += invoice.amount;
-      if (invoice.status === 'OVERDUE') summary.overdue += invoice.amount;
+      const amount = Number(invoice.amount);
+      summary.total += amount;
+      if (invoice.status === 'PAID') summary.paid += amount;
+      if (invoice.status === 'SENT' || invoice.status === 'DRAFT') summary.pending += amount;
+      if (invoice.status === 'OVERDUE') summary.overdue += amount;
       return summary;
     }, { total: 0, paid: 0, pending: 0, overdue: 0 });
 
@@ -80,7 +81,7 @@ const createInvoice = async (req, res) => {
     const invoice = await prisma.invoice.create({
       data: {
         number,
-        amount: parseFloat(amount),
+        amount: amount.toFixed(2),
         description: description || '',
         dueDate: new Date(dueDate),
         status,
@@ -109,7 +110,7 @@ const updateInvoice = async (req, res) => {
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
       data: {
-        amount: amount === undefined ? existingInvoice.amount : parseFloat(amount),
+        amount: amount === undefined ? existingInvoice.amount : parseFloat(amount).toFixed(2),
         description: description === undefined ? existingInvoice.description : description,
         dueDate: dueDate ? new Date(dueDate) : existingInvoice.dueDate,
         status: status || existingInvoice.status,
