@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form"; // ✅ Add useWatch
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,24 +14,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { clientsAPI, invoicesAPI, projectsAPI } from '../services/api';
 import { Check, ChevronRight, ChevronLeft } from "lucide-react";
-
-// Mock data
-const mockClients = [
-  { id: "1", name: "CodeCraft Studios", email: "hello@codecraft.com" },
-  { id: "2", name: "DesignHub Agency", email: "info@designhub.com" },
-  { id: "3", name: "GreenByte Technologies", email: "contact@greenbyte.com" },
-  { id: "4", name: "Brandify Co.", email: "studio@brandify.com" },
-];
-
-const mockProjects = [
-  { id: "1", name: "E-commerce Website", clientId: "1" },
-  { id: "2", name: "Mobile App Design", clientId: "2" },
-  { id: "3", name: "Dashboard Redesign", clientId: "2" },
-  { id: "4", name: "API Integration", clientId: "3" },
-  { id: "5", name: "Brand Identity", clientId: "4" },
-  { id: "6", name: "Website Redesign", clientId: "1" },
-];
 
 const invoiceSchema = z.object({
   clientId: z.string().min(1, "Please select a client"),
@@ -45,6 +29,36 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
+  const [clients, setClients] = useState([]);
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen) return undefined;
+
+    let cancelled = false;
+    const loadOptions = async () => {
+      try {
+        const [clientsResponse, projectsResponse] = await Promise.all([
+          clientsAPI.getAll(),
+          projectsAPI.getAll(),
+        ]);
+        if (!cancelled) {
+          setClients(clientsResponse.data.data || []);
+          setProjects(projectsResponse.data.data || []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error('Failed to load clients and projects');
+          console.error('Load invoice options error:', error);
+        }
+      }
+    };
+
+    loadOptions();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   const {
     register,
@@ -75,12 +89,12 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
     name: "projectId",
   });
 
-  const filteredProjects = mockProjects.filter(
+  const filteredProjects = projects.filter(
     (project) => project.clientId === clientId
   );
 
-  const selectedClient = mockClients.find((c) => c.id === clientId);
-  const selectedProject = mockProjects.find((p) => p.id === projectId);
+  const selectedClient = clients.find((client) => client.id === clientId);
+  const selectedProject = projects.find((project) => project.id === projectId);
 
   const handleNext = () => {
     if (step === 1 && !clientId) {
@@ -103,31 +117,37 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
     onClose();
   };
 
-  const onSubmit = (data) => {
-    setIsGenerating(true);
-    setTimeout(() => {
-      const invoiceNumber = `INV-${Date.now().toString().slice(-6)}`;
-      const newInvoice = {
-        id: invoiceNumber,
-        number: invoiceNumber,
-        client: selectedClient,
-        project: selectedProject,
-        amount: parseFloat(data.amount),
-        description: data.description,
-        dueDate: data.dueDate,
-        issueDate: new Date().toISOString(),
-        status: "DRAFT",
-      };
-      setGeneratedInvoice(newInvoice);
-      setIsGenerating(false);
-      toast.success("Invoice generated successfully!");
-      setStep(4);
-    }, 1500);
-  };
+const onSubmit = async (data) => {
+  setIsGenerating(true);
+
+  try {
+    const invoiceData = {
+      amount: parseFloat(data.amount),
+      description: data.description,
+      dueDate: data.dueDate,
+      projectId: data.projectId,
+    };
+
+    console.log('Sending invoice data:', invoiceData); // Add this line for debugging
+
+    const response = await invoicesAPI.create(invoiceData);
+    const newInvoice = response.data.data;
+
+    setGeneratedInvoice(newInvoice);
+    toast.success('Invoice generated successfully!');
+    setStep(4);
+  } catch (error) {
+    console.error('Full error:', error); // Add this line
+    const message = error.response?.data?.message || 'Failed to create invoice';
+    toast.error(message);
+  } finally {
+    setIsGenerating(false);
+  }
+};
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto bg-white">
+      <DialogContent className="max-h-[90vh] overflow-y-auto bg-white sm:max-w-125">
         <DialogHeader className="bg-white">
           <DialogTitle className="text-xl font-bold text-slate-900 bg-white">
             Create New Invoice
@@ -183,7 +203,7 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
                   Select Client
                 </Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white">
-                  {mockClients.map((client) => (
+                  {clients.map((client) => (
                     <button
                       key={client.id}
                       type="button"
@@ -455,7 +475,7 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
                     <div className="flex justify-between py-1 border-b border-slate-200">
                       <span className="text-slate-500">Client:</span>
                       <span className="font-medium text-slate-900">
-                        {generatedInvoice.client?.name}
+                        {generatedInvoice.project?.client?.name}
                       </span>
                     </div>
                     <div className="flex justify-between py-1 border-b border-slate-200">

@@ -27,11 +27,17 @@ app.use(express.json());
 // ============================================
 // ROUTES
 // ============================================
-app.use('/api/auth', require('./routes/auth.routes'));
-app.use('/api/clients', require('./routes/client.routes')); // ✅ Added this line
 // ... other imports and middleware
 
-app.use('/api/projects', require('./routes/project.routes')); // ✅ Add this line
+// ============================================
+// ROUTES
+// ============================================
+app.use('/api/auth', require('./routes/auth.routes'));
+app.use('/api/clients', require('./routes/client.routes'));
+app.use('/api/projects', require('./routes/project.routes'));
+app.use('/api/invoices', require('./routes/invoice.routes')); // ✅ Add this line
+
+// ... rest of the file
 
 // ... rest of the file
 

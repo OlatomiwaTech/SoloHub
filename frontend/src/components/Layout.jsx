@@ -12,7 +12,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
+    { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
     { name: "Clients", href: "/clients", icon: Users },
     { name: "Projects", href: "/projects", icon: FolderOpen },
     { name: "Invoices", href: "/invoices", icon: FileText },
