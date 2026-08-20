@@ -24,7 +24,17 @@ const Layout = ({ children }) => {
       {/* Sidebar */}
       <aside className="hidden md:flex md:flex-col w-64 bg-slate-900 text-white">
         <div className="p-6">
-          <img src="/logo.jpeg" alt="SoloHub" className="h-16 w-full object-contain object-left" />
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white shadow-sm">
+              <img
+                src="/logo.jpeg"
+                alt="SoloHub logo mark"
+                className="h-full w-full scale-[1.8] object-cover"
+                style={{ objectPosition: '50% 37%' }}
+              />
+            </div>
+            <span className="text-xl font-bold tracking-tight text-white">SoloHub</span>
+          </div>
           <p className="text-xs text-slate-400 mt-1">Freelance command center</p>
         </div>
         <nav className="flex-1 px-4 space-y-1">
@@ -63,7 +73,17 @@ const Layout = ({ children }) => {
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-slate-200 p-4 fixed top-0 left-0 right-0 z-10">
         <div className="flex justify-between items-center">
-          <img src="/logo.jpeg" alt="SoloHub" className="h-10 w-28 object-contain object-left" />
+          <div className="flex items-center gap-2">
+            <div className="h-9 w-9 overflow-hidden rounded-lg bg-white shadow-sm">
+              <img
+                src="/logo.jpeg"
+                alt="SoloHub logo mark"
+                className="h-full w-full scale-[1.8] object-cover"
+                style={{ objectPosition: '50% 37%' }}
+              />
+            </div>
+            <span className="text-lg font-bold text-slate-900">SoloHub</span>
+          </div>
           <div className="h-8 w-8 rounded-full bg-emerald-600 flex items-center justify-center text-sm font-bold text-white">
             T
           </div>

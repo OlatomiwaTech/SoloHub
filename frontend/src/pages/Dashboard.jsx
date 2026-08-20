@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, DollarSign, Clock, Briefcase, Users } from "lucide-react";
+import { ArrowUp, CalendarDays, DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -13,6 +14,7 @@ import {
 import InvoiceWizard from "@/components/InvoiceWizard";
 
 const Dashboard = () => {
+  const { user } = useAuth();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
 
   const stats = [
@@ -85,35 +87,44 @@ const Dashboard = () => {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6 bg-slate-50">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-slate-900">Dashboard</h1>
-            <p className="text-slate-500">Welcome back, Tomiwa 🎉</p>
+            <p className="mb-1 text-sm font-medium text-emerald-600">Overview</p>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+              Welcome back, {user?.fullName || "there"}!
+            </h1>
           </div>
-          <button
-            onClick={() => setIsWizardOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
-          >
-            + New Invoice
-          </button>
+          <div className="flex w-full gap-3 sm:w-auto">
+            <button className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm sm:flex-none">
+              <CalendarDays className="h-4 w-4" />
+              This Month
+            </button>
+            <button
+              onClick={() => setIsWizardOpen(true)}
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 sm:flex-none"
+            >
+              <Plus className="h-4 w-4" />
+              New Invoice
+            </button>
+          </div>
         </div>
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, index) => (
-            <Card key={index} className="border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-slate-500">
+            <Card key={index} className="border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {stat.title}
                 </CardTitle>
-                <div className={`p-2 rounded-lg ${stat.iconBg}`}>
+                <div className={`rounded-lg p-2 ${stat.iconBg}`}>
                   <stat.icon className={`h-4 w-4 ${stat.iconColor}`} />
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-900">{stat.value}</div>
+                <div className="text-xl font-bold text-slate-900">{stat.value}</div>
                 <div className="flex items-center pt-1">
                   <span className="text-emerald-600 text-xs font-medium flex items-center">
                     <ArrowUp className="h-3 w-3 mr-1" />
@@ -127,10 +138,13 @@ const Dashboard = () => {
         </div>
 
         {/* Chart */}
-        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-900">Revenue Overview</h3>
-            <span className="text-xs text-slate-400">Last 6 months</span>
+        <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900">Revenue Growth</h3>
+              <p className="mt-1 text-xs text-slate-400">Last 6 months</p>
+            </div>
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">+18.2%</span>
           </div>
           <ResponsiveContainer width="100%" height={250}>
             <LineChart data={revenueData}>

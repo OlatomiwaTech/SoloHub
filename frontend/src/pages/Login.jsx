@@ -15,7 +15,7 @@ export default function Login() {
     setSubmitting(true);
     try {
       await login(form);
-      navigate(location.state?.from?.pathname || '/', { replace: true });
+      navigate(location.state?.from?.pathname || '/dashboard', { replace: true });
     } catch (error) {
       toast.error(error.response?.data?.message || 'Unable to log in');
     } finally {
