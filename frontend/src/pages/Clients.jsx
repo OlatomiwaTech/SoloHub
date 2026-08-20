@@ -35,11 +35,6 @@ const Clients = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch clients on mount
-  useEffect(() => {
-    fetchClients();
-  }, []);
-
   const fetchClients = async () => {
     try {
       setLoading(true);
@@ -52,6 +47,35 @@ const Clients = () => {
       setLoading(false);
     }
   };
+
+  // Fetch clients on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadClients = async () => {
+      try {
+        const response = await clientsAPI.getAll();
+        if (!cancelled) {
+          setClients(response.data.data || []);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error('Failed to load clients');
+          console.error('Fetch clients error:', error);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    loadClients();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleOpenModal = (client = null) => {
     if (client) {
@@ -238,7 +262,7 @@ const Clients = () => {
 
       {/* Add/Edit Client Modal */}
       <Dialog open={isModalOpen} onOpenChange={handleCloseModal}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-106.25">
           <DialogHeader>
             <DialogTitle>
               {editingClient ? 'Edit Client' : 'Add New Client'}

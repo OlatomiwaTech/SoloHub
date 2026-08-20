@@ -29,12 +29,11 @@ app.use(express.json());
 // ============================================
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/clients', require('./routes/client.routes')); // ✅ Added this line
+// ... other imports and middleware
 
-// ============================================
-// OTHER ROUTES (will add later)
-// ============================================
-// app.use('/api/projects', require('./routes/project.routes'));
-// app.use('/api/invoices', require('./routes/invoice.routes'));
+app.use('/api/projects', require('./routes/project.routes')); // ✅ Add this line
+
+// ... rest of the file
 
 // Health check
 app.get('/api/health', (req, res) => {

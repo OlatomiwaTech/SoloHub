@@ -5,6 +5,7 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients'; // ✅ Add this import
+import Projects from './pages/Projects';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -45,6 +46,16 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Clients />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Projects />
               </Layout>
             </ProtectedRoute>
           }

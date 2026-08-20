@@ -1,9 +1,11 @@
 const express = require('express');
 const crypto = require('crypto');
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
 
 const router = express.Router();
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 /**
  * Paystack Webhook Handler

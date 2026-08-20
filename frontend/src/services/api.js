@@ -49,5 +49,16 @@ export const clientsAPI = {
   update: (id, data) => api.put(`/clients/${id}`, data),
   delete: (id) => api.delete(`/clients/${id}`),
 };
+// ... existing code ...
+
+// Projects API
+export const projectsAPI = {
+  getAll: () => api.get('/projects'),
+  getById: (id) => api.get(`/projects/${id}`),
+  getByClient: (clientId) => api.get(`/projects/client/${clientId}`),
+  create: (data) => api.post('/projects', data),
+  update: (id, data) => api.put(`/projects/${id}`, data),
+  delete: (id) => api.delete(`/projects/${id}`),
+};
 
 export default api;
