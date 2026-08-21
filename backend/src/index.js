@@ -2,12 +2,18 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
+const { PrismaPg } = require('@prisma/adapter-pg');
+const { Pool } = require('pg');
 
 dotenv.config();
 
 const app = express();
-const prisma = new PrismaClient(); // ✅ Simple, no adapter needed
 const PORT = process.env.PORT || 5000;
+
+// Database setup
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 // CORS configuration
 const allowedOrigins = [
@@ -23,7 +29,6 @@ app.use(cors({
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.log('❌ Blocked by CORS:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -68,5 +73,4 @@ app.use((err, req, res, next) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 SoloHub backend running on http://localhost:${PORT}`);
-  console.log(`📝 Allowed origins:`, allowedOrigins);
 });
