@@ -12,14 +12,20 @@ export default function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitting(true);
-    try {
-      await register(form);
-      navigate('/', { replace: true });
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Unable to create account');
-    } finally {
-      setSubmitting(false);
+
+    // ✅ Register returns { success, user, message }
+    const result = await register(form);
+    console.log('Registration result:', result); // For debugging
+
+    if (result.success) {
+      toast.success('Account created! 🎉');
+      navigate('/dashboard', { replace: true }); // ✅ Redirect to dashboard, not root
+    } else {
+      // ✅ Show the actual error message from the backend
+      toast.error(result.message || 'Unable to create account');
     }
+
+    setSubmitting(false);
   };
 
   return (
@@ -32,20 +38,43 @@ export default function Register() {
         </div>
         <label className="block text-sm font-medium text-slate-700">
           Full name
-          <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" required value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} />
+          <input 
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" 
+            required 
+            value={form.fullName} 
+            onChange={(event) => setForm({ ...form, fullName: event.target.value })} 
+          />
         </label>
         <label className="block text-sm font-medium text-slate-700">
           Email
-          <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" type="email" required value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} />
+          <input 
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" 
+            type="email" 
+            required 
+            value={form.email} 
+            onChange={(event) => setForm({ ...form, email: event.target.value })} 
+          />
         </label>
         <label className="block text-sm font-medium text-slate-700">
           Password
-          <input className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" type="password" minLength="8" required value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} />
+          <input 
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2" 
+            type="password" 
+            minLength="8" 
+            required 
+            value={form.password} 
+            onChange={(event) => setForm({ ...form, password: event.target.value })} 
+          />
         </label>
-        <button className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:opacity-60" disabled={submitting}>
+        <button 
+          className="w-full rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white disabled:opacity-60" 
+          disabled={submitting}
+        >
           {submitting ? 'Creating account...' : 'Create account'}
         </button>
-        <p className="text-center text-sm text-slate-500">Already registered? <Link className="text-emerald-600 hover:underline" to="/login">Sign in</Link></p>
+        <p className="text-center text-sm text-slate-500">
+          Already registered? <Link className="text-emerald-600 hover:underline" to="/login">Sign in</Link>
+        </p>
       </form>
     </main>
   );

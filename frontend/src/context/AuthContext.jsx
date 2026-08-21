@@ -47,16 +47,22 @@ export function AuthProvider({ children }) {
     return authenticatedUser;
   };
 
-  const register = async (details) => {
-    const response = await authAPI.register(details);
-    const { user: registeredUser, token } = response.data.data;
-    authVersion.current += 1;
+ const register = async (userData) => {
+  try {
+    const response = await authAPI.register(userData);
+    const { user, token } = response.data.data;
+    
     localStorage.setItem('token', token);
-    localStorage.setItem('user', JSON.stringify(registeredUser));
-    setUser(registeredUser);
-    setLoading(false);
-    return registeredUser;
-  };
+    localStorage.setItem('user', JSON.stringify(user));
+    setUser(user);
+    
+    return { success: true, user };
+  } catch (error) {
+    console.error('Register error:', error);
+    const message = error.response?.data?.message || 'Registration failed';
+    return { success: false, message };
+  }
+};
 
   const logout = () => {
     localStorage.removeItem('token');
