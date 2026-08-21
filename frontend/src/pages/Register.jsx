@@ -9,24 +9,25 @@ export default function Register() {
   const [form, setForm] = useState({ fullName: '', email: '', password: '' });
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    setSubmitting(true);
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setSubmitting(true);
 
-    // ✅ Register returns { success, user, message }
-    const result = await register(form);
-    console.log('Registration result:', result); // For debugging
+  console.log('📤 Sending registration data:', form); // Debug
 
-    if (result.success) {
-      toast.success('Account created! 🎉');
-      navigate('/dashboard', { replace: true }); // ✅ Redirect to dashboard, not root
-    } else {
-      // ✅ Show the actual error message from the backend
-      toast.error(result.message || 'Unable to create account');
-    }
+  const result = await register(form);
+  console.log('📥 Registration result:', result); // Debug
 
-    setSubmitting(false);
-  };
+  if (result.success) {
+    toast.success('Account created! 🎉');
+    navigate('/dashboard', { replace: true });
+  } else {
+    // ✅ Show the exact error message from backend
+    toast.error(result.message || 'Unable to create account');
+  }
+
+  setSubmitting(false);
+};
 
   return (
     <main className="min-h-screen grid place-items-center bg-slate-50 p-6">

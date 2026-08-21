@@ -47,9 +47,11 @@ export function AuthProvider({ children }) {
     return authenticatedUser;
   };
 
- const register = async (userData) => {
+const register = async (userData) => {
   try {
+    console.log('📝 Registering:', userData); // Debug
     const response = await authAPI.register(userData);
+    console.log('📝 Response:', response.data); // Debug
     const { user, token } = response.data.data;
     
     localStorage.setItem('token', token);
@@ -58,8 +60,17 @@ export function AuthProvider({ children }) {
     
     return { success: true, user };
   } catch (error) {
-    console.error('Register error:', error);
-    const message = error.response?.data?.message || 'Registration failed';
+    console.error('❌ Register error:', error);
+    console.error('❌ Error response:', error.response);
+    
+    // ✅ Extract error message from the response
+    let message = 'Registration failed';
+    if (error.response && error.response.data && error.response.data.message) {
+      message = error.response.data.message;
+    } else if (error.message) {
+      message = error.message;
+    }
+    
     return { success: false, message };
   }
 };
