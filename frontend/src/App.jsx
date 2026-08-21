@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Clients from './pages/Clients';
 import Projects from './pages/Projects';
 import Invoices from './pages/Invoices';
+import Settings from './pages/Settings'; // ✅ Import Settings
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -58,6 +59,17 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Invoices />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        {/* ✅ Settings route */}
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
               </Layout>
             </ProtectedRoute>
           }

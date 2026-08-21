@@ -1,6 +1,9 @@
 const nodemailer = require('nodemailer');
 const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const { PrismaPg } = require('@prisma/adapter-pg');
+
+const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+const prisma = new PrismaClient({ adapter });
 
 // Email configuration
 const transporter = nodemailer.createTransport({
@@ -22,14 +25,18 @@ const sendInvoiceEmail = async (invoiceId) => {
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: {
-        client: true,
-        project: true,
+        project: { include: { client: true } },
         user: true,
       },
     });
 
     if (!invoice) {
       throw new Error('Invoice not found');
+    }
+
+    const client = invoice.project?.client;
+    if (!client?.email) {
+      throw new Error('Invoice client email not found');
     }
 
     const html = `
@@ -39,13 +46,13 @@ const sendInvoiceEmail = async (invoiceId) => {
           <p style="margin: 0;">Your Professional Invoice</p>
         </div>
         <div style="padding: 30px; border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 10px 10px;">
-          <p>Dear ${invoice.client.name},</p>
+          <p>Dear ${client.name},</p>
           <p>Please find your invoice <strong>#${invoice.number}</strong> below.</p>
           
           <div style="background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <h3 style="margin-top: 0;">Invoice Summary</h3>
             <p><strong>Project:</strong> ${invoice.project.name}</p>
-            <p><strong>Amount:</strong> ₦${invoice.amount.toLocaleString()}</p>
+            <p><strong>Amount:</strong> ₦${Number(invoice.amount).toLocaleString()}</p>
             <p><strong>Due Date:</strong> ${new Date(invoice.dueDate).toLocaleDateString()}</p>
             ${invoice.description ? `<p><strong>Description:</strong> ${invoice.description}</p>` : ''}
           </div>
@@ -71,13 +78,13 @@ const sendInvoiceEmail = async (invoiceId) => {
 
     const mailOptions = {
       from: `"SoloHub" <${process.env.EMAIL_FROM || 'noreply@solohub.app'}>`,
-      to: invoice.client.email,
+      to: client.email,
       subject: `Invoice #${invoice.number} from ${invoice.user.fullName}`,
       html,
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Invoice email sent to ${invoice.client.email}`);
+    console.log(`✅ Invoice email sent to ${client.email}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
     console.error('❌ Email error:', error);
@@ -93,14 +100,18 @@ const sendPaymentConfirmationEmail = async (invoiceId) => {
     const invoice = await prisma.invoice.findUnique({
       where: { id: invoiceId },
       include: {
-        client: true,
-        project: true,
+        project: { include: { client: true } },
         user: true,
       },
     });
 
     if (!invoice) {
       throw new Error('Invoice not found');
+    }
+
+    const client = invoice.project?.client;
+    if (!client) {
+      throw new Error('Invoice client not found');
     }
 
     const html = `
@@ -115,8 +126,8 @@ const sendPaymentConfirmationEmail = async (invoiceId) => {
           <div style="background: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #bbf7d0;">
             <h3 style="margin-top: 0;">Payment Details</h3>
             <p><strong>Invoice:</strong> #${invoice.number}</p>
-            <p><strong>Client:</strong> ${invoice.client.name}</p>
-            <p><strong>Amount:</strong> ₦${invoice.amount.toLocaleString()}</p>
+            <p><strong>Client:</strong> ${client.name}</p>
+            <p><strong>Amount:</strong> ₦${Number(invoice.amount).toLocaleString()}</p>
             <p><strong>Date:</strong> ${new Date().toLocaleDateString()}</p>
           </div>
           
