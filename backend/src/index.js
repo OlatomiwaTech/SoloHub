@@ -19,6 +19,9 @@ app.use(cors({
   credentials: true,
 }));
 
+// Paystack webhooks need the raw request body for signature verification.
+app.use('/api/webhooks', require('./routes/webhooks.routes'));
+
 app.use(express.json());
 
 // API routes

@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/dialog';
 import { PDFDownloadLink } from '@react-pdf/renderer';
 import InvoicePDF from '../components/InvoicePDF';
+import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -364,15 +365,23 @@ const Invoices = () => {
 
                           {/* Sent actions */}
                           {invoice.status === 'SENT' && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleUpdateStatus(invoice.id, 'PAID')}
-                              className="h-8 w-8 p-0 hover:bg-emerald-50"
-                              title="Mark as Paid"
-                            >
-                              <CheckCircle className="h-4 w-4 text-emerald-600" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleUpdateStatus(invoice.id, 'PAID')}
+                                className="h-8 w-8 p-0 hover:bg-emerald-50"
+                                title="Mark as Paid"
+                              >
+                                <CheckCircle className="h-4 w-4 text-emerald-600" />
+                              </Button>
+                              <PaystackPayment
+                                invoice={invoice}
+                                compact
+                                onPaymentSuccess={() => fetchInvoices()}
+                                onClose={() => {}}
+                              />
+                            </>
                           )}
                         </div>
                       </TableCell>
@@ -457,7 +466,20 @@ const Invoices = () => {
                 </div>
               )}
 
-              <div className="flex justify-end gap-3 pt-4 border-t border-slate-200">
+              <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
+                {selectedInvoice && selectedInvoice.status !== 'PAID' && selectedInvoice.status !== 'CANCELLED' && (
+                  <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                    <PaystackPayment
+                      invoice={selectedInvoice}
+                      onPaymentSuccess={() => {
+                        fetchInvoices();
+                        setIsViewModalOpen(false);
+                        toast.success('Payment received! 🎉');
+                      }}
+                      onClose={() => {}}
+                    />
+                  </div>
+                )}
                 <Button
                   variant="outline"
                   onClick={() => setIsViewModalOpen(false)}

@@ -122,8 +122,9 @@ async function handleChargeSuccess(data) {
       where: { paystackReference: reference },
       include: {
         user: true,
-        client: true,
-        project: true
+        project: {
+          include: { client: true },
+        },
       }
     });
 
