@@ -3,24 +3,22 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
+const prisma = new PrismaClient(); // ✅ Simple, no adapter needed
 const PORT = process.env.PORT || 5000;
-const prisma = new PrismaClient();
 
-// ✅ CORS configuration - allow multiple origins (no duplicates!)
+// CORS configuration
 const allowedOrigins = [
-  'https://solo-hub-two.vercel.app',    // Your Vercel frontend
-  'https://solohub-waqs.onrender.com',  // Your Render backend
-  'http://localhost:5173',              // Local development
-  'http://localhost:5000',              // Local backend
+  'https://solo-hub-two.vercel.app',
+  'https://solohub-waqs.onrender.com',
+  'http://localhost:5173',
+  'http://localhost:5000',
 ];
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -34,7 +32,6 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// Middleware
 app.use(express.json());
 
 // Routes
@@ -45,10 +42,10 @@ app.use('/api/invoices', require('./routes/invoice.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+  res.json({
+    status: 'ok',
     message: 'SoloHub API is running 🚀',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 });
 
@@ -56,7 +53,7 @@ app.get('/api/health', (req, res) => {
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: `Route ${req.method} ${req.url} not found`
+    message: `Route ${req.method} ${req.url} not found`,
   });
 });
 
@@ -65,11 +62,10 @@ app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(500).json({
     success: false,
-    message: err.message || 'Internal server error'
+    message: err.message || 'Internal server error',
   });
 });
 
-// Start server
 app.listen(PORT, () => {
   console.log(`🚀 SoloHub backend running on http://localhost:${PORT}`);
   console.log(`📝 Allowed origins:`, allowedOrigins);
