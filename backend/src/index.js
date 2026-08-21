@@ -12,9 +12,14 @@ const allowedOrigins = [
   'http://localhost:5000',              // Local backend
 ];
 
+const allowedOrigins = [
+  'https://solo-hub-two.vercel.app',
+  'https://solohub-waqs.onrender.com',
+  'http://localhost:5173',
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
@@ -24,7 +29,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 // Your routes go here...
