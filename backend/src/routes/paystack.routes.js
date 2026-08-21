@@ -2,8 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { initializeTransaction, verifyTransaction } = require('../utils/paystack');
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../utils/db');
 
 /**
  * Initialize payment for an invoice
