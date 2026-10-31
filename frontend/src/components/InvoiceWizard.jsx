@@ -465,6 +465,9 @@ const onSubmit = async (data) => {
               <p className="text-slate-500 bg-white">
                 Your invoice has been created successfully.
               </p>
+              <p className="text-sm text-slate-500 bg-white">
+                Email delivery is not available yet. You can download the PDF from the Invoices page.
+              </p>
 
               {generatedInvoice && (
                 <div className="bg-slate-100 p-4 rounded-xl border border-slate-200 text-left max-w-sm mx-auto">
@@ -506,9 +509,10 @@ const onSubmit = async (data) => {
                 </Button>
                 <Button
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => toast.info("Coming soon: Send invoice to client!")}
+                  disabled
+                  title="Email delivery is not available yet"
                 >
-                  Send to Client
+                  Email delivery coming soon
                 </Button>
               </div>
             </div>

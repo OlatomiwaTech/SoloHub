@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarDays, DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
+import { DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -169,11 +169,7 @@ const Dashboard = () => {
               Welcome back, {user?.fullName || "there"}!
             </h1>
           </div>
-          <div className="flex w-full gap-3 sm:w-auto">
-            <button className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm sm:flex-none">
-              <CalendarDays className="h-4 w-4" />
-              This Month
-            </button>
+          <div className="flex w-full sm:w-auto">
             <button
               onClick={() => setIsWizardOpen(true)}
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 sm:flex-none"
@@ -208,7 +204,7 @@ const Dashboard = () => {
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <h3 className="font-semibold text-slate-900">Revenue Growth</h3>
+              <h3 className="font-semibold text-slate-900">Revenue Trend</h3>
               <p className="mt-1 text-xs text-slate-400">Paid invoices by payment month · last 6 months</p>
             </div>
           </div>
