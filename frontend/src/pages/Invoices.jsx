@@ -9,7 +9,8 @@ import {
   Send,
   CheckCircle,
   AlertCircle,
-  XCircle
+  XCircle,
+  Copy,
 } from 'lucide-react';
 import { invoicesAPI } from '../services/api';
 import InvoiceWizard from '../components/InvoiceWizard';
@@ -44,6 +45,7 @@ import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [duplicateSource, setDuplicateSource] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -134,6 +136,12 @@ const Invoices = () => {
     setIsViewModalOpen(true);
   };
 
+  const handleDuplicate = (invoice) => {
+    setIsViewModalOpen(false);
+    setDuplicateSource(invoice);
+    setIsWizardOpen(true);
+  };
+
   const handleUpdateStatus = async (id, status) => {
     try {
       await invoicesAPI.updateStatus(id, status);
@@ -205,7 +213,7 @@ const Invoices = () => {
           <p className="text-slate-500 bg-white">Manage and track all your invoices</p>
         </div>
         <Button
-          onClick={() => setIsWizardOpen(true)}
+          onClick={() => { setDuplicateSource(null); setIsWizardOpen(true); }}
           className="bg-emerald-600 hover:bg-emerald-700 text-white"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -340,6 +348,16 @@ const Invoices = () => {
                             />
                           )}
                           <InvoicePDFDownloadButton invoice={invoice} />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDuplicate(invoice)}
+                            className="h-8 w-8 p-0 hover:bg-emerald-50"
+                            aria-label={`Create a copy of invoice ${invoice.number}`}
+                            title={`Duplicate ${invoice.number} as a new draft`}
+                          >
+                            <Copy className="h-4 w-4 text-emerald-700" />
+                          </Button>
 
                           {/* View Button */}
                           <Button
@@ -491,6 +509,10 @@ const Invoices = () => {
                   Close
                 </Button>
 
+                <Button variant="outline" onClick={() => handleDuplicate(selectedInvoice)}>
+                  <Copy className="mr-2 h-4 w-4" /> Duplicate
+                </Button>
+
                 <InvoicePDFDownloadButton invoice={selectedInvoice} fullWidth />
                 {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
                   <InvoiceEmailDraftButton
@@ -515,8 +537,10 @@ const Invoices = () => {
       {/* Invoice Wizard */}
       <InvoiceWizard
         isOpen={isWizardOpen}
+        initialInvoice={duplicateSource}
         onClose={() => {
           setIsWizardOpen(false);
+          setDuplicateSource(null);
           fetchInvoices();
         }}
       />

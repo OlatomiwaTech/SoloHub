@@ -3,7 +3,7 @@ import { useForm, useWatch } from "react-hook-form"; // ✅ Add useWatch
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { format } from "date-fns";
+import { addDays, format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
   Dialog,
@@ -31,7 +31,7 @@ const invoiceSchema = z.object({
   dueDate: z.string().min(1, "Please select a due date").refine((value) => !Number.isNaN(Date.parse(value)), "Please enter a valid due date"),
 });
 
-const InvoiceWizard = ({ isOpen, onClose, initialProjectId = null }) => {
+const InvoiceWizard = ({ isOpen, onClose, initialProjectId = null, initialInvoice = null }) => {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
@@ -110,14 +110,27 @@ const InvoiceWizard = ({ isOpen, onClose, initialProjectId = null }) => {
   const selectedProject = projects.find((project) => project.id === projectId);
 
   useEffect(() => {
-    if (!isOpen || !initialProjectId || optionsLoading) return;
-    const project = projects.find((item) => item.id === initialProjectId);
+    if (!isOpen || optionsLoading) return;
+    const projectIdToSelect = initialInvoice?.projectId || initialProjectId;
+    if (!projectIdToSelect) return;
+
+    const project = projects.find((item) => item.id === projectIdToSelect);
     if (!project) return;
 
-    setValue('clientId', project.clientId);
-    setValue('projectId', project.id);
+    if (initialInvoice) {
+      reset({
+        clientId: project.clientId,
+        projectId: project.id,
+        amount: String(Number(initialInvoice.amount) || ''),
+        description: initialInvoice.description || '',
+        dueDate: format(addDays(new Date(), 14), 'yyyy-MM-dd'),
+      });
+    } else {
+      setValue('clientId', project.clientId);
+      setValue('projectId', project.id);
+    }
     setStep(3);
-  }, [isOpen, initialProjectId, optionsLoading, projects, setValue]);
+  }, [isOpen, initialProjectId, initialInvoice, optionsLoading, projects, reset, setValue]);
 
   const handleNext = () => {
     if (step === 1 && !clientId) {
@@ -170,10 +183,10 @@ const onSubmit = async (data) => {
       <DialogContent className="max-h-[90vh] overflow-y-auto bg-white sm:max-w-125">
         <DialogHeader className="bg-white">
           <DialogTitle className="text-xl font-bold text-slate-900 bg-white">
-            Create New Invoice
+            {initialInvoice ? 'Duplicate Invoice' : 'Create New Invoice'}
           </DialogTitle>
           <DialogDescription className="bg-white">
-            Create a professional invoice in minutes
+            {initialInvoice ? `Create a new draft based on invoice ${initialInvoice.number}` : 'Create a professional invoice in minutes'}
           </DialogDescription>
         </DialogHeader>
 
@@ -384,10 +397,12 @@ const onSubmit = async (data) => {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 bg-white">
               <div className="bg-white">
                 <h3 className="text-lg font-semibold text-slate-900 bg-white">
-                  Invoice Details
+                  {initialInvoice ? 'Review the New Draft' : 'Invoice Details'}
                 </h3>
                 <p className="text-sm text-slate-500 bg-white">
-                  Enter the invoice information
+                  {initialInvoice
+                    ? `The amount and description were copied from ${initialInvoice.number}. Check them and update the new due date before creating.`
+                    : 'Enter the invoice information'}
                 </p>
               </div>
 
@@ -511,7 +526,7 @@ const onSubmit = async (data) => {
                 Your invoice has been created successfully.
               </p>
               <p className="text-sm text-slate-500 bg-white">
-                Email delivery is not available yet. You can download the PDF from the Invoices page.
+                You can download the PDF or prepare an email draft from the Invoices page.
               </p>
 
               {generatedInvoice && (
@@ -552,12 +567,8 @@ const onSubmit = async (data) => {
                 <Button variant="outline" onClick={handleClose}>
                   Close
                 </Button>
-                <Button
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  disabled
-                  title="Email delivery is not available yet"
-                >
-                  Email delivery coming soon
+                <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                  <Link to="/invoices" onClick={handleClose}>Go to Invoices</Link>
                 </Button>
               </div>
             </div>
