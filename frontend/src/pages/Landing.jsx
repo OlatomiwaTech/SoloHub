@@ -207,8 +207,8 @@ function Landing() {
         </section>
 
         <section id="features" className="relative isolate scroll-mt-28 overflow-hidden bg-slate-50 py-20 sm:py-28">
-          <img src="https://images.pexels.com/photos/35372208/pexels-photo-35372208.jpeg?auto=compress&cs=tinysrgb&w=1800" alt="" aria-hidden="true" loading="lazy" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover object-center opacity-35" />
-          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-br from-white/90 via-white/85 to-emerald-50/65" />
+          <img src="https://images.pexels.com/photos/35372208/pexels-photo-35372208.jpeg?auto=compress&cs=tinysrgb&w=1800" alt="" aria-hidden="true" loading="lazy" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover object-center opacity-80" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-br from-white/88 via-white/75 to-emerald-50/55" />
           <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
             <Reveal className="mb-11 max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700">Made for the work behind the work</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.045em] text-slate-950 sm:text-5xl">Less switching.<br /><span className="font-serif font-normal italic text-emerald-700">More clarity.</span></h2></Reveal>
             <div className="grid gap-4 md:grid-cols-2">
