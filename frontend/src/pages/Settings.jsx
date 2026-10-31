@@ -47,7 +47,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 const Settings = () => {
-  const { user, logout, updateProfile, changePassword, deleteAccount } = useAuth();
+  const { user, updateProfile, changePassword, deleteAccount } = useAuth();
   const [profileForm, setProfileForm] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -125,18 +125,6 @@ const Settings = () => {
       setIsDeleteDialogOpen(false);
       setDeleteConfirmation('');
       setDeletePassword('');
-    }
-  };
-
-  const handlePreferencesSave = async () => {
-    setIsSaving(true);
-    try {
-      await updateProfile({ currency: profileForm.currency });
-      toast.success('Currency preference saved');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to save preferences');
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -336,6 +324,7 @@ const Settings = () => {
                   <Input
                     id="newPassword"
                     type="password"
+                    minLength={8}
                     placeholder="Enter new password"
                     value={passwordForm.newPassword}
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
@@ -384,14 +373,14 @@ const Settings = () => {
                 Two-Factor Authentication
               </CardTitle>
               <p className="text-sm text-slate-500">
-                Add an extra layer of security to your account
+                Two-factor authentication is not available in this version of SoloHub.
               </p>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <div>
                   <p className="font-medium text-slate-900">2FA Status</p>
-                  <p className="text-sm text-slate-500">Not enabled</p>
+                  <p className="text-sm text-slate-500">Two-factor authentication is not available yet.</p>
                 </div>
                 <Button variant="outline" className="border-slate-300" disabled>
                   Enable 2FA
@@ -417,6 +406,7 @@ const Settings = () => {
               <div className="space-y-2">
                 <Label htmlFor="currency">Default Currency</Label>
                 <Select
+                  disabled
                   value={profileForm.currency}
                   onValueChange={(value) => setProfileForm({ ...profileForm, currency: value })}
                 >
@@ -432,6 +422,12 @@ const Settings = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <p className="text-sm text-slate-500">
+                Invoices and payments currently use NGN. Additional currencies will be enabled when invoice records can retain their own currency.
+              </p>
+              <p className="text-sm text-slate-500">
+                Timezone and notification preferences are not available yet.
+              </p>
 
               <div className="space-y-2">
                 <Label htmlFor="timezone">Timezone</Label>
@@ -461,10 +457,6 @@ const Settings = () => {
                 </Button>
               </div>
 
-              <Button onClick={handlePreferencesSave} className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={isSaving}>
-                <Save className="h-4 w-4 mr-2" />
-                Save Preferences
-              </Button>
             </CardContent>
           </Card>
         </TabsContent>
