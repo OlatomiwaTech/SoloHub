@@ -12,6 +12,7 @@ import {
   XCircle,
   Copy,
   Download,
+  Pencil,
 } from 'lucide-react';
 import { invoicesAPI } from '../services/api';
 import InvoiceWizard from '../components/InvoiceWizard';
@@ -42,6 +43,7 @@ import {
 import InvoicePDFDownloadButton from '../components/InvoicePDFDownloadButton';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import InvoiceEmailDraftButton from '../components/InvoiceEmailDraftButton';
+import EditInvoiceDialog from '../components/EditInvoiceDialog';
 import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
@@ -53,6 +55,7 @@ const Invoices = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [invoiceToEdit, setInvoiceToEdit] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [totals, setTotals] = useState({
@@ -141,6 +144,11 @@ const Invoices = () => {
     setIsViewModalOpen(false);
     setDuplicateSource(invoice);
     setIsWizardOpen(true);
+  };
+
+  const handleEdit = (invoice) => {
+    setIsViewModalOpen(false);
+    setInvoiceToEdit(invoice);
   };
 
   const handleUpdateStatus = async (id, status) => {
@@ -389,6 +397,18 @@ const Invoices = () => {
                             />
                           )}
                           <InvoicePDFDownloadButton invoice={invoice} />
+                          {['DRAFT', 'SENT', 'OVERDUE'].includes(invoice.status) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(invoice)}
+                              className="h-8 w-8 p-0 hover:bg-blue-50"
+                              aria-label={`Edit invoice ${invoice.number}`}
+                              title={`Edit invoice ${invoice.number}`}
+                            >
+                              <Pencil className="h-4 w-4 text-blue-600" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -550,6 +570,12 @@ const Invoices = () => {
                   Close
                 </Button>
 
+                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                  <Button variant="outline" onClick={() => handleEdit(selectedInvoice)}>
+                    <Pencil className="mr-2 h-4 w-4" /> Edit
+                  </Button>
+                )}
+
                 <Button variant="outline" onClick={() => handleDuplicate(selectedInvoice)}>
                   <Copy className="mr-2 h-4 w-4" /> Duplicate
                 </Button>
@@ -584,6 +610,12 @@ const Invoices = () => {
           setDuplicateSource(null);
           fetchInvoices();
         }}
+      />
+      <EditInvoiceDialog
+        invoice={invoiceToEdit}
+        open={Boolean(invoiceToEdit)}
+        onOpenChange={(open) => { if (!open) setInvoiceToEdit(null); }}
+        onUpdated={fetchInvoices}
       />
       <ConfirmDeleteDialog
         open={Boolean(deleteTarget)}
