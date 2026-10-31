@@ -21,6 +21,11 @@ const PublicLayout = ({ children }) => (
           </Link>
         </div>
       </nav>
+      <nav className="flex items-center justify-center gap-6 border-t border-slate-100 px-4 py-2 text-xs font-medium text-slate-600 md:hidden" aria-label="Page sections">
+        <a className="py-1 transition hover:text-emerald-700" href="#features">Features</a>
+        <a className="py-1 transition hover:text-emerald-700" href="#how-it-works">How it works</a>
+        <a className="py-1 transition hover:text-emerald-700" href="#faq">FAQ</a>
+      </nav>
     </header>
 
     {children}

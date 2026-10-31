@@ -131,7 +131,7 @@ const Landing = () => (
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
+      <section id="get-started" className="scroll-mt-24 px-5 py-20 sm:px-8 sm:py-28 lg:px-12">
         <div className="relative mx-auto max-w-7xl overflow-hidden rounded-[28px] bg-emerald-700 px-6 py-14 text-white sm:px-12 sm:py-16 lg:px-16">
           <div className="pointer-events-none absolute -right-20 -top-32 h-80 w-80 rounded-full border border-white/15" />
           <div className="relative flex flex-col justify-between gap-9 md:flex-row md:items-end">
