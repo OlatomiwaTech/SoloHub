@@ -45,7 +45,7 @@ const initializeTransaction = async (email, amount, reference, metadata = {}) =>
       reference,
       currency: 'NGN',
       metadata,
-      callback_url: `${process.env.APP_URL || 'http://localhost:5173'}/payment/verify`,
+      callback_url: `${(process.env.APP_URL || 'http://localhost:5173').replace(/\/$/, '')}/payment/verify`,
     }),
   });
 
