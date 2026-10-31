@@ -73,6 +73,7 @@ export const invoicesAPI = {
   update: (id, data) => api.put(`/invoices/${id}`, data),
   delete: (id) => api.delete(`/invoices/${id}`),
   updateStatus: (id, status) => api.patch(`/invoices/${id}/status`, { status }),
+  recordManualPayment: (id) => api.patch(`/invoices/${id}/manual-payment`),
 };
 
 export const paymentsAPI = {

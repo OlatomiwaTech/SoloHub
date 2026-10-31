@@ -8,6 +8,7 @@ const {
   updateInvoice,
   deleteInvoice,
   updateInvoiceStatus,
+  recordManualPayment,
 } = require('../controllers/invoice.controller');
 // Add this function
 const handlePaystackWebhook = async (data) => {
@@ -43,6 +44,7 @@ router.get('/:id', getInvoiceById);
 router.post('/', createInvoice);
 router.put('/:id', updateInvoice);
 router.patch('/:id/status', updateInvoiceStatus);
+router.patch('/:id/manual-payment', recordManualPayment);
 router.delete('/:id', deleteInvoice);
 
 module.exports = router;

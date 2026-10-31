@@ -143,6 +143,18 @@ const Invoices = () => {
     }
   };
 
+  const handleRecordManualPayment = async (id) => {
+    try {
+      await invoicesAPI.recordManualPayment(id);
+      toast.success('Manual payment recorded');
+      fetchInvoices();
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to record manual payment';
+      toast.error(message);
+      console.error('Record manual payment error:', error);
+    }
+  };
+
   const getStatusConfig = (status) => {
     const configs = {
       DRAFT: { color: 'bg-slate-100 text-slate-700', icon: FileText, label: 'Draft' },
@@ -369,7 +381,7 @@ const Invoices = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleUpdateStatus(invoice.id, 'PAID')}
+                                onClick={() => handleRecordManualPayment(invoice.id)}
                                 className="h-8 w-8 p-0 hover:bg-emerald-50"
                                 title="Record manual payment"
                                 aria-label={`Record manual payment for invoice ${invoice.number}`}

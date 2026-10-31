@@ -139,6 +139,9 @@ const updateInvoiceStatus = async (req, res) => {
     const { status } = req.body;
     const validStatuses = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'];
     if (!validStatuses.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
+    if (status === 'PAID') {
+      return res.status(400).json({ success: false, message: 'Use payment verification or record a manual payment' });
+    }
 
     const existingInvoice = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!existingInvoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
@@ -155,6 +158,35 @@ const updateInvoiceStatus = async (req, res) => {
   }
 };
 
+const recordManualPayment = async (req, res) => {
+  try {
+    const existingInvoice = await prisma.invoice.findFirst({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!existingInvoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+    if (!['SENT', 'OVERDUE'].includes(existingInvoice.status)) {
+      return res.status(400).json({ success: false, message: 'Only sent or overdue invoices can be marked as manually paid' });
+    }
+
+    const updated = await prisma.invoice.updateMany({
+      where: { id: existingInvoice.id, userId: req.user.id, status: existingInvoice.status },
+      data: { status: 'PAID', paidAt: new Date() },
+    });
+    if (updated.count !== 1) {
+      return res.status(409).json({ success: false, message: 'Invoice status changed. Refresh and try again.' });
+    }
+
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: existingInvoice.id, userId: req.user.id },
+      include: invoiceInclude,
+    });
+    return res.json({ success: true, message: 'Manual payment recorded', data: invoice });
+  } catch (error) {
+    console.error('Record manual payment error:', error);
+    return res.status(500).json({ success: false, message: 'Failed to record manual payment' });
+  }
+};
+
 module.exports = {
   getInvoices,
   getInvoiceById,
@@ -162,4 +194,5 @@ module.exports = {
   updateInvoice,
   deleteInvoice,
   updateInvoiceStatus,
+  recordManualPayment,
 };
