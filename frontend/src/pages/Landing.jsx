@@ -25,8 +25,8 @@ const viewTabs = [
   { id: 'invoices', label: 'Invoices', icon: FileText },
 ];
 
-function ProductPreview() {
-  const [activeView, setActiveView] = useState('overview');
+function ProductPreview({ initialView = 'overview' }) {
+  const [activeView, setActiveView] = useState(initialView);
 
   return (
     <div className="relative mx-auto w-full max-w-[760px] lg:ml-auto">
@@ -170,9 +170,9 @@ function Landing() {
 
         <section id="product" className="scroll-mt-28 bg-slate-950 py-20 text-white sm:py-28">
           <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-            <div className="mx-auto mb-12 max-w-2xl text-center sm:mb-14"><p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-300">One workspace, connected records</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.04em] sm:text-5xl">From first client note<br className="hidden sm:block" /> to paid invoice.</h2><p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">Keep the context around your work together. Open the preview tabs to see the kind of detail each part keeps in view.</p></div>
-            <ProductPreview />
-            <div className="mt-7 text-center"><p className="text-[11px] text-slate-400">Illustrative sample workspace. Your dashboard reflects your own records.</p></div>
+            <div className="mx-auto mb-12 max-w-2xl text-center sm:mb-14"><p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-300">A closer look</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.04em] sm:text-5xl">The detail behind<br className="hidden sm:block" /> every clear overview.</h2><p className="mt-4 text-sm leading-6 text-slate-300 sm:text-base">Keep client relationships and invoice follow-up in the same workspace as your dashboard.</p></div>
+            <div className="grid items-start gap-10 lg:grid-cols-2 lg:gap-8"><div><ProductPreview initialView="clients" /><p className="mt-5 text-center text-sm font-medium text-slate-300">Client records</p></div><div><ProductPreview initialView="invoices" /><p className="mt-5 text-center text-sm font-medium text-slate-300">Invoice overview</p></div></div>
+            <div className="mt-8 text-center"><p className="text-[11px] text-slate-400">Illustrative sample workspace. Your dashboard reflects your own records.</p></div>
           </div>
         </section>
 
