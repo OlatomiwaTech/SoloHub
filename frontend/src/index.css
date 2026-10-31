@@ -98,6 +98,7 @@ a {
 }
 
 @theme inline {
+  --font-serif: "DM Serif Display", Georgia, serif;
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
