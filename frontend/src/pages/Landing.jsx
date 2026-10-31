@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowDown, ArrowRight, BarChart3, BriefcaseBusiness, Check, CheckCircle2,
@@ -105,6 +105,36 @@ function MiniStat({ label, value }) {
   return <div className="rounded-lg border border-slate-200 bg-white p-2.5 sm:p-3"><p className="text-[8px] text-slate-400">{label}</p><p className="mt-1 text-sm font-bold text-slate-900">{value}</p></div>;
 }
 
+function Reveal({ children, delay = 0, className = '' }) {
+  const elementRef = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const element = elementRef.current;
+    if (!element) return undefined;
+    if (!('IntersectionObserver' in window)) {
+      setVisible(true);
+      return undefined;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: 0.12, rootMargin: '0px 0px -32px 0px' });
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={elementRef} className={`reveal-on-scroll ${visible ? 'is-visible' : ''} ${className}`} style={{ animationDelay: `${delay}ms` }}>
+      {children}
+    </div>
+  );
+}
+
 function InvoiceTable({ compact = false }) {
   return (
     <div className="overflow-hidden rounded-lg border border-slate-200 bg-white sm:rounded-xl">
@@ -120,10 +150,10 @@ function InvoiceTable({ compact = false }) {
 }
 
 const capabilities = [
-  { icon: Users, eyebrow: 'CLIENTS', title: 'Remember the relationship, not another spreadsheet.', description: 'Keep the details you need close to the projects and invoices they belong to.' },
-  { icon: FolderKanban, eyebrow: 'PROJECTS', title: 'Know what is moving and what is waiting.', description: 'Keep client work in view and update a project as its status changes.' },
-  { icon: FileText, eyebrow: 'INVOICES', title: 'Make the next payment easier to track.', description: 'Create an invoice, download a PDF, and see which invoices are paid or still need follow-up.' },
-  { icon: BarChart3, eyebrow: 'OVERVIEW', title: 'See the shape of your workload.', description: 'Bring revenue collected, unpaid invoices, active projects, clients, and recent invoices together.' },
+  { icon: Users, eyebrow: 'CLIENTS', title: 'Remember the relationship, not another spreadsheet.', description: 'Keep the details you need close to the projects and invoices they belong to.', image: 'https://images.pexels.com/photos/9429554/pexels-photo-9429554.jpeg?auto=compress&cs=tinysrgb&w=1000', alt: 'Freelancer planning work beside a laptop and notebook', credit: 'Monstera Production', photo: 'https://www.pexels.com/photo/crop-unrecognizable-black-woman-using-laptop-and-writing-notes-9429554/' },
+  { icon: FolderKanban, eyebrow: 'PROJECTS', title: 'Know what is moving and what is waiting.', description: 'Keep client work in view and update a project as its status changes.', image: 'https://images.pexels.com/photos/6393010/pexels-photo-6393010.jpeg?auto=compress&cs=tinysrgb&w=1000', alt: 'Freelancer working at a laptop in a bright workspace', credit: 'William Fortunato', photo: 'https://www.pexels.com/photo/entrepreneur-in-casual-clothes-typing-on-laptop-in-light-room-6393010/' },
+  { icon: FileText, eyebrow: 'INVOICES', title: 'Make the next payment easier to track.', description: 'Create an invoice, download a PDF, and see which invoices are paid or still need follow-up.', image: 'https://images.pexels.com/photos/6779604/pexels-photo-6779604.jpeg?auto=compress&cs=tinysrgb&w=1000', alt: 'Independent worker focused on a laptop in a home workspace', credit: 'Artem Podrez', photo: 'https://www.pexels.com/photo/a-freelancer-working-6779604/' },
+  { icon: BarChart3, eyebrow: 'OVERVIEW', title: 'See the shape of your workload.', description: 'Bring revenue collected, unpaid invoices, active projects, clients, and recent invoices together.', image: 'https://images.pexels.com/photos/35372208/pexels-photo-35372208.jpeg?auto=compress&cs=tinysrgb&w=1000', alt: 'Freelancer reviewing work on a laptop', credit: 'Zeal Creative Studios', photo: 'https://www.pexels.com/photo/african-man-working-on-laptop-in-modern-setting-35372208/' },
 ];
 
 const questions = [
@@ -176,12 +206,32 @@ function Landing() {
           </div>
         </section>
 
-        <section id="features" className="scroll-mt-28 bg-slate-50 py-20 sm:py-28">
+        <section id="features" className="relative isolate scroll-mt-28 overflow-hidden bg-slate-50 py-20 sm:py-28">
+          <img src="https://images.pexels.com/photos/35372208/pexels-photo-35372208.jpeg?auto=compress&cs=tinysrgb&w=1800" alt="" aria-hidden="true" loading="lazy" decoding="async" className="absolute inset-0 -z-20 h-full w-full object-cover object-center opacity-35" />
+          <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-br from-white/90 via-white/85 to-emerald-50/65" />
           <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-12">
-            <div className="mb-11 max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700">Made for the work behind the work</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.045em] text-slate-950 sm:text-5xl">Less switching.<br /><span className="font-serif font-normal italic text-emerald-700">More clarity.</span></h2></div>
+            <Reveal className="mb-11 max-w-2xl"><p className="text-xs font-semibold uppercase tracking-[.18em] text-emerald-700">Made for the work behind the work</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.045em] text-slate-950 sm:text-5xl">Less switching.<br /><span className="font-serif font-normal italic text-emerald-700">More clarity.</span></h2></Reveal>
             <div className="grid gap-4 md:grid-cols-2">
-              {capabilities.map(({ icon: Icon, eyebrow, title, description }, index) => <article key={eyebrow} className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8"><div className="flex items-center justify-between"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700"><Icon className="h-5 w-5" /></span><span className="font-mono text-[10px] tracking-[.15em] text-slate-400">0{index + 1} / {eyebrow}</span></div><h3 className="mt-7 max-w-md text-xl font-semibold leading-snug tracking-tight text-slate-950 sm:text-2xl">{title}</h3><p className="mt-3 max-w-lg text-sm leading-6 text-slate-600">{description}</p><div className="mt-6 h-px w-full bg-slate-100" /><p className="mt-4 inline-flex items-center gap-2 text-xs font-medium text-emerald-800"><Check className="h-3.5 w-3.5" /> Connected to your workspace</p></article>)}
+              {capabilities.map(({ icon: Icon, eyebrow, title, description, image, alt, credit, photo }, index) => (
+                <Reveal key={eyebrow} delay={index * 110} className="h-full">
+                  <article className="group h-full overflow-hidden rounded-2xl border border-white/80 bg-white/95 shadow-lg shadow-slate-900/[.06] backdrop-blur-sm transition duration-500 ease-out hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-emerald-950/15">
+                    <div className="relative h-48 overflow-hidden sm:h-56">
+                      <img src={image} alt={alt} loading="lazy" decoding="async" className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-105" />
+                      <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-t from-slate-950/45 via-transparent to-transparent" />
+                      <a href={photo} target="_blank" rel="noreferrer" className="absolute bottom-3 right-3 rounded-full border border-white/60 bg-white/90 px-2.5 py-1.5 text-[10px] font-medium text-slate-700 shadow-sm backdrop-blur transition hover:bg-white hover:text-emerald-800">Photo: {credit} / Pexels</a>
+                    </div>
+                    <div className="relative p-6 sm:p-8">
+                      <div className="flex items-center justify-between"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-50 text-emerald-700 transition duration-300 group-hover:bg-emerald-700 group-hover:text-white"><Icon className="h-5 w-5" /></span><span className="font-mono text-[10px] tracking-[.15em] text-slate-400">0{index + 1} / {eyebrow}</span></div>
+                      <h3 className="mt-6 max-w-md text-xl font-semibold leading-snug tracking-tight text-slate-950 sm:text-2xl">{title}</h3>
+                      <p className="mt-3 max-w-lg text-sm leading-6 text-slate-600">{description}</p>
+                      <div className="mt-6 h-px w-full bg-slate-100 transition-colors group-hover:bg-emerald-100" />
+                      <p className="mt-4 inline-flex items-center gap-2 text-xs font-medium text-emerald-800"><Check className="h-3.5 w-3.5" /> Connected to your workspace</p>
+                    </div>
+                  </article>
+                </Reveal>
+              ))}
             </div>
+            <p className="mt-5 text-right text-[10px] text-slate-500">Section background photo: <a href="https://www.pexels.com/photo/african-man-working-on-laptop-in-modern-setting-35372208/" target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-emerald-800">Zeal Creative Studios on Pexels</a></p>
           </div>
         </section>
 
