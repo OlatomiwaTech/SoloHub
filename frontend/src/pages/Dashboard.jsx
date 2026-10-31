@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, DollarSign, Clock, Briefcase, Users, Plus, RefreshCw } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -24,8 +25,12 @@ const Dashboard = () => {
     pendingInvoices: 0,
     activeProjects: 0,
     totalClients: 0,
+    totalProjects: 0,
+    totalInvoices: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState('');
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
 
@@ -34,6 +39,7 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
+        setDashboardError('');
         
         // Fetch all data in parallel
         const [clientsRes, projectsRes, invoicesRes] = await Promise.all([
@@ -86,6 +92,8 @@ const Dashboard = () => {
           pendingInvoices: (totals.pending || 0) + (totals.overdue || 0),
           activeProjects: activeProjects,
           totalClients: clients.length,
+          totalProjects: projects.length,
+          totalInvoices: invoices.length,
         });
         
         setRecentInvoices(recent);
@@ -93,22 +101,14 @@ const Dashboard = () => {
         
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        // Use fallback data if API fails
-        setDashboardData({
-          totalRevenue: 0,
-          pendingInvoices: 0,
-          activeProjects: 0,
-          totalClients: 0,
-        });
-        setRecentInvoices([]);
-        setRevenueData([]);
+        setDashboardError('We could not load your workspace data. Check your connection and try again.');
       } finally {
         setLoading(false);
       }
     };
     
     fetchDashboardData();
-  }, []);
+  }, [loadAttempt]);
 
   // ✅ Build stats array from real data
   const stats = [
@@ -146,6 +146,13 @@ const Dashboard = () => {
     },
   ];
 
+  const onboardingSteps = [
+    { label: 'Add your first client', complete: dashboardData.totalClients > 0, to: '/clients' },
+    { label: 'Create a project', complete: dashboardData.totalProjects > 0, to: '/projects' },
+    { label: 'Create an invoice', complete: dashboardData.totalInvoices > 0, onClick: () => setIsWizardOpen(true) },
+  ];
+  const completedSteps = onboardingSteps.filter((step) => step.complete).length;
+
   // ✅ Loading state
   if (loading) {
     return (
@@ -155,6 +162,19 @@ const Dashboard = () => {
           <p className="text-slate-500 mt-4">Loading your dashboard...</p>
         </div>
       </div>
+    );
+  }
+
+  if (dashboardError) {
+    return (
+      <section className="mx-auto mt-12 max-w-xl rounded-2xl border border-amber-200 bg-white p-8 text-center shadow-sm" role="alert">
+        <span className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-amber-50 text-amber-700"><CircleAlert className="h-6 w-6" /></span>
+        <h1 className="mt-4 text-xl font-semibold text-slate-900">Your dashboard is unavailable</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">{dashboardError}</p>
+        <button type="button" onClick={() => { setLoading(true); setLoadAttempt((attempt) => attempt + 1); }} className="mt-6 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+          <RefreshCw className="h-4 w-4" /> Try again
+        </button>
+      </section>
     );
   }
 
@@ -199,6 +219,27 @@ const Dashboard = () => {
             </Card>
           ))}
         </div>
+
+        {completedSteps < onboardingSteps.length && (
+          <section className="rounded-xl border border-emerald-100 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="getting-started-title">
+            <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">A good place to begin</p>
+                <h2 id="getting-started-title" className="mt-1 text-lg font-semibold text-slate-900">Set up your workspace</h2>
+                <p className="mt-1 text-sm text-slate-500">Follow these steps to connect your clients, work, and billing.</p>
+              </div>
+              <span className="shrink-0 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-800">{completedSteps} of {onboardingSteps.length} complete</span>
+            </div>
+            <div className="mt-5 grid gap-3 md:grid-cols-3">
+              {onboardingSteps.map((step, index) => {
+                const content = <><span className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-xs font-semibold ${step.complete ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{step.complete ? <Check className="h-4 w-4" /> : `0${index + 1}`}</span><span className="min-w-0 flex-1"><span className={`block text-sm font-medium ${step.complete ? 'text-slate-400 line-through' : 'text-slate-800'}`}>{step.label}</span><span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">{step.complete ? 'Done' : 'Get started'} {!step.complete && <ArrowRight className="h-3 w-3" />}</span></span></>;
+                const className = `flex min-h-[76px] items-center gap-3 rounded-lg border p-3 text-left transition duration-200 ${step.complete ? 'border-slate-100 bg-slate-50' : 'border-slate-200 hover:-translate-y-0.5 hover:border-emerald-300 hover:bg-emerald-50/50 hover:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600'}`;
+
+                return step.to ? <Link key={step.label} to={step.to} className={className}>{content}</Link> : <button key={step.label} type="button" onClick={step.onClick} className={className}>{content}</button>;
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Chart */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
@@ -247,9 +288,9 @@ const Dashboard = () => {
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
           <div className="flex justify-between items-center mb-4">
             <h3 className="font-semibold text-slate-900">Recent Invoices</h3>
-            <a href="/invoices" className="text-emerald-600 text-sm font-medium hover:underline">
+            <Link to="/invoices" className="text-emerald-600 text-sm font-medium hover:underline">
               View all
-            </a>
+            </Link>
           </div>
           {recentInvoices.length > 0 ? (
             <div className="overflow-x-auto">
@@ -291,8 +332,11 @@ const Dashboard = () => {
               </table>
             </div>
           ) : (
-            <div className="text-center py-8 text-slate-400">
-              <p>No invoices yet. Create your first invoice!</p>
+            <div className="rounded-lg bg-slate-50 py-8 text-center">
+              <FileText className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
+              <p className="mt-3 text-sm font-medium text-slate-700">No invoices yet</p>
+              <p className="mt-1 text-xs text-slate-500">Your latest billing activity will appear here.</p>
+              <button type="button" onClick={() => setIsWizardOpen(true)} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 transition hover:gap-2.5 hover:text-emerald-800">Create an invoice <ArrowRight className="h-4 w-4" /></button>
             </div>
           )}
         </div>
