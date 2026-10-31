@@ -11,6 +11,7 @@ import {
   AlertCircle,
   XCircle,
   Copy,
+  Download,
 } from 'lucide-react';
 import { invoicesAPI } from '../services/api';
 import InvoiceWizard from '../components/InvoiceWizard';
@@ -201,6 +202,36 @@ const Invoices = () => {
     });
   };
 
+  const exportFilteredInvoices = () => {
+    const escapeCsvCell = (value) => {
+      let text = String(value ?? '').replace(/[\r\n]+/g, ' ');
+      if (/^\s*[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+    const rows = [
+      ['Invoice number', 'Client', 'Project', 'Amount (NGN)', 'Status', 'Issue date', 'Due date'],
+      ...filteredInvoices.map((invoice) => [
+        invoice.number,
+        invoice.project?.client?.name,
+        invoice.project?.name,
+        Number(invoice.amount).toFixed(2),
+        invoice.status,
+        formatDate(invoice.issueDate),
+        formatDate(invoice.dueDate),
+      ]),
+    ];
+    const csv = `\uFEFF${rows.map((row) => row.map(escapeCsvCell).join(',')).join('\r\n')}`;
+    const fileUrl = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const downloadLink = document.createElement('a');
+    downloadLink.href = fileUrl;
+    downloadLink.download = `solohub-invoices-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    downloadLink.remove();
+    window.setTimeout(() => URL.revokeObjectURL(fileUrl), 0);
+    toast.success(`${filteredInvoices.length} ${filteredInvoices.length === 1 ? 'invoice' : 'invoices'} exported`);
+  };
+
   return (
     <div className="space-y-6 bg-white">
       {/* Header */}
@@ -212,13 +243,23 @@ const Invoices = () => {
           </h1>
           <p className="text-slate-500 bg-white">Manage and track all your invoices</p>
         </div>
-        <Button
-          onClick={() => { setDuplicateSource(null); setIsWizardOpen(true); }}
-          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          New Invoice
-        </Button>
+        <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={exportFilteredInvoices}
+            disabled={filteredInvoices.length === 0}
+            title="Export the invoices currently shown by your search and status filters"
+          >
+            <Download className="mr-2 h-4 w-4" /> Export CSV
+          </Button>
+          <Button
+            onClick={() => { setDuplicateSource(null); setIsWizardOpen(true); }}
+            className="bg-emerald-600 text-white hover:bg-emerald-700"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Invoice
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
