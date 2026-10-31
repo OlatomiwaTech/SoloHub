@@ -6,7 +6,6 @@ import {
   Eye, 
   Trash2, 
   Search, 
-  Download,
   Send,
   CheckCircle,
   AlertCircle,
@@ -38,8 +37,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { PDFDownloadLink } from '@react-pdf/renderer';
-import InvoicePDF from '../components/InvoicePDF';
+import InvoicePDFDownloadButton from '../components/InvoicePDFDownloadButton';
 import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
@@ -328,22 +326,7 @@ const Invoices = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {/* ✅ PDF Download Button - Table Actions */}
-                          <PDFDownloadLink
-                            document={<InvoicePDF invoice={invoice} />}
-                            fileName={`Invoice-${invoice.number}.pdf`}
-                          >
-                            {() => (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 hover:bg-emerald-50"
-                                title="Download PDF"
-                              >
-                                <Download className="h-4 w-4 text-emerald-600" />
-                              </Button>
-                            )}
-                          </PDFDownloadLink>
+                          <InvoicePDFDownloadButton invoice={invoice} />
 
                           {/* View Button */}
                           <Button
@@ -495,21 +478,7 @@ const Invoices = () => {
                   Close
                 </Button>
 
-                {/* ✅ PDF Download Button - View Modal */}
-                <PDFDownloadLink
-                  document={<InvoicePDF invoice={selectedInvoice} />}
-                  fileName={`Invoice-${selectedInvoice.number}.pdf`}
-                >
-                  {({ loading }) => (
-                    <Button 
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      disabled={loading}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {loading ? 'Generating...' : 'Download PDF'}
-                    </Button>
-                  )}
-                </PDFDownloadLink>
+                <InvoicePDFDownloadButton invoice={selectedInvoice} fullWidth />
               </div>
             </div>
           )}
