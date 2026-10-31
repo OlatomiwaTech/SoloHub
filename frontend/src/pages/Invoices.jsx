@@ -45,6 +45,7 @@ import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import InvoiceEmailDraftButton from '../components/InvoiceEmailDraftButton';
 import EditInvoiceDialog from '../components/EditInvoiceDialog';
 import PaystackPayment from '../components/PaystackPayment';
+import { getInvoiceDisplayStatus } from '../lib/invoiceStatus';
 
 const Invoices = () => {
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -58,13 +59,6 @@ const Invoices = () => {
   const [invoiceToEdit, setInvoiceToEdit] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [totals, setTotals] = useState({
-    total: 0,
-    paid: 0,
-    pending: 0,
-    overdue: 0,
-  });
-
   useEffect(() => {
     let cancelled = false;
 
@@ -73,12 +67,6 @@ const Invoices = () => {
         const response = await invoicesAPI.getAll();
         if (!cancelled) {
           setInvoices(response.data.data || []);
-          setTotals(response.data.totals || {
-            total: 0,
-            paid: 0,
-            pending: 0,
-            overdue: 0,
-          });
           setLoading(false);
         }
       } catch (error) {
@@ -102,12 +90,6 @@ const Invoices = () => {
       setLoading(true);
       const response = await invoicesAPI.getAll();
       setInvoices(response.data.data || []);
-      setTotals(response.data.totals || {
-        total: 0,
-        paid: 0,
-        pending: 0,
-        overdue: 0,
-      });
     } catch (error) {
       toast.error('Failed to load invoices');
       console.error('Fetch invoices error:', error);
@@ -187,13 +169,22 @@ const Invoices = () => {
   };
 
   const filteredInvoices = invoices.filter((invoice) => {
-    const matchesStatus = statusFilter === 'ALL' || invoice.status === statusFilter;
+    const matchesStatus = statusFilter === 'ALL' || getInvoiceDisplayStatus(invoice) === statusFilter;
     const term = searchTerm.trim().toLowerCase();
     const matchesSearch = !term || [invoice.number, invoice.project?.client?.name, invoice.project?.name]
       .some((value) => value?.toLowerCase().includes(term));
     return matchesStatus && matchesSearch;
   });
   const hasActiveFilters = Boolean(searchTerm.trim()) || statusFilter !== 'ALL';
+  const totals = invoices.reduce((summary, invoice) => {
+    const amount = Number(invoice.amount) || 0;
+    const status = getInvoiceDisplayStatus(invoice);
+    summary.total += amount;
+    if (status === 'PAID') summary.paid += amount;
+    if (status === 'DRAFT' || status === 'SENT') summary.pending += amount;
+    if (status === 'OVERDUE') summary.overdue += amount;
+    return summary;
+  }, { total: 0, paid: 0, pending: 0, overdue: 0 });
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-NG', {
@@ -359,7 +350,8 @@ const Invoices = () => {
               </TableHeader>
               <TableBody>
                 {filteredInvoices.map((invoice) => {
-                  const statusConfig = getStatusConfig(invoice.status);
+                  const displayStatus = getInvoiceDisplayStatus(invoice);
+                  const statusConfig = getStatusConfig(displayStatus);
                   const StatusIcon = statusConfig.icon;
                   return (
                     <TableRow key={invoice.id} className="hover:bg-slate-50">
@@ -376,7 +368,7 @@ const Invoices = () => {
                         {formatCurrency(invoice.amount)}
                       </TableCell>
                       <TableCell className={`text-sm ${
-                        invoice.status === 'OVERDUE' 
+                        displayStatus === 'OVERDUE' 
                           ? 'text-red-600 font-medium' 
                           : 'text-slate-500'
                       }`}>
@@ -390,14 +382,14 @@ const Invoices = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          {['DRAFT', 'SENT', 'OVERDUE'].includes(invoice.status) && (
+                          {['DRAFT', 'SENT', 'OVERDUE'].includes(displayStatus) && (
                             <InvoiceEmailDraftButton
                               invoice={invoice}
-                              mode={['SENT', 'OVERDUE'].includes(invoice.status) ? 'reminder' : 'invoice'}
+                              mode={['SENT', 'OVERDUE'].includes(displayStatus) ? 'reminder' : 'invoice'}
                             />
                           )}
                           <InvoicePDFDownloadButton invoice={invoice} />
-                          {['DRAFT', 'SENT', 'OVERDUE'].includes(invoice.status) && (
+                          {['DRAFT', 'SENT', 'OVERDUE'].includes(displayStatus) && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -431,7 +423,7 @@ const Invoices = () => {
                           </Button>
 
                           {/* Draft actions */}
-                          {invoice.status === 'DRAFT' && (
+                          {displayStatus === 'DRAFT' && (
                             <>
                               <Button
                                 variant="ghost"
@@ -454,7 +446,7 @@ const Invoices = () => {
                           )}
 
                           {/* Sent actions */}
-                          {invoice.status === 'SENT' && (
+                          {['SENT', 'OVERDUE'].includes(displayStatus) && (
                             <>
                               <Button
                                 variant="ghost"

@@ -1,5 +1,6 @@
 import { Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { getInvoiceDisplayStatus } from '../lib/invoiceStatus';
 
 const formatAmount = (amount) => new Intl.NumberFormat('en-NG', {
   style: 'currency',
@@ -37,7 +38,7 @@ const InvoiceEmailDraftButton = ({ invoice, fullWidth = false, mode = 'invoice' 
   today.setHours(0, 0, 0, 0);
   const dueDateValue = new Date(invoice.dueDate);
   dueDateValue.setHours(0, 0, 0, 0);
-  const overdue = invoice.status === 'OVERDUE' || dueDateValue < today;
+  const overdue = getInvoiceDisplayStatus(invoice) === 'OVERDUE' || dueDateValue < today;
   const subject = isReminder
     ? `Payment reminder — invoice ${invoice.number}`
     : `Invoice ${invoice.number} — ${projectName}`;

@@ -1,6 +1,7 @@
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import robotoRegular from '@fontsource/roboto/files/roboto-latin-400-normal.woff';
 import robotoBold from '@fontsource/roboto/files/roboto-latin-700-normal.woff';
+import { getInvoiceDisplayStatus } from '../lib/invoiceStatus';
 
 Font.register({
   family: 'Roboto',
@@ -142,6 +143,7 @@ const InvoicePDF = ({ invoice }) => {
   const projectName = invoice?.project?.name || 'N/A';
   const userName = invoice?.user?.fullName || 'SoloHub User';
   const userEmail = invoice?.user?.email || 'user@example.com';
+  const displayStatus = getInvoiceDisplayStatus(invoice);
 
   const getStatusStyle = (status) => {
     const statusMap = {
@@ -184,7 +186,7 @@ const InvoicePDF = ({ invoice }) => {
 
         {/* Status */}
         <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 20 }}>
-          <Text style={getStatusStyle(invoice?.status)}>{invoice?.status || 'DRAFT'}</Text>
+          <Text style={getStatusStyle(displayStatus)}>{displayStatus}</Text>
         </View>
 
         {/* From/To */}

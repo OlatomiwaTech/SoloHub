@@ -14,6 +14,7 @@ import {
 } from "recharts";
 import InvoiceWizard from "@/components/InvoiceWizard";
 import InvoiceEmailDraftButton from "@/components/InvoiceEmailDraftButton";
+import { getInvoiceDisplayStatus } from "@/lib/invoiceStatus";
 import { clientsAPI, projectsAPI, invoicesAPI } from '../services/api';
 
 const Dashboard = () => {
@@ -73,7 +74,7 @@ const Dashboard = () => {
             day: 'numeric',
           }),
           amount: `₦${Number(inv.amount).toLocaleString('en-NG')}`,
-          status: inv.status,
+          status: getInvoiceDisplayStatus(inv),
         }));
 
         // Surface sent invoices that are overdue or due within the next week.
@@ -82,7 +83,7 @@ const Dashboard = () => {
         const nextWeek = new Date(today);
         nextWeek.setDate(nextWeek.getDate() + 7);
         const needsFollowUp = invoices
-          .filter((invoice) => invoice.status === 'OVERDUE' || invoice.status === 'SENT')
+          .filter((invoice) => ['OVERDUE', 'SENT'].includes(getInvoiceDisplayStatus(invoice)))
           .map((invoice) => {
             const dueDate = new Date(invoice.dueDate);
             dueDate.setHours(0, 0, 0, 0);
@@ -93,7 +94,7 @@ const Dashboard = () => {
               project: invoice.project,
               amount: Number(invoice.amount) || 0,
               dueDate: invoice.dueDate,
-              overdue: invoice.status === 'OVERDUE' || dueDate < today,
+              overdue: getInvoiceDisplayStatus(invoice) === 'OVERDUE' || dueDate < today,
               dueTimestamp: dueDate.getTime(),
             };
           })
