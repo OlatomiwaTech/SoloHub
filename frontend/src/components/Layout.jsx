@@ -4,6 +4,7 @@ import {
   Users,
   FolderOpen,
   FileText,
+  TrendingUp,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -11,6 +12,7 @@ import { useAuth } from '../context/AuthContext';
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { name: 'Revenue', href: '/revenue', icon: TrendingUp },
   { name: 'Clients', href: '/clients', icon: Users },
   { name: 'Projects', href: '/projects', icon: FolderOpen },
   { name: 'Invoices', href: '/invoices', icon: FileText },
@@ -89,7 +91,7 @@ const Layout = ({ children }) => {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 z-10 flex justify-around border-t border-slate-200 bg-white py-2 md:hidden">
-        {navigation.slice(0, 4).map((item) => {
+        {navigation.slice(0, 5).map((item) => {
           const Icon = item.icon;
           const isActive = location.pathname === item.href;
           return (

@@ -7,6 +7,7 @@ import Layout from './components/Layout';
 import Landing from './pages/Landing';
 
 const Dashboard = lazy(() => import('./pages/Dashboard'));
+const Revenue = lazy(() => import('./pages/Revenue'));
 const Clients = lazy(() => import('./pages/Clients'));
 const Projects = lazy(() => import('./pages/Projects'));
 const Invoices = lazy(() => import('./pages/Invoices'));
@@ -48,6 +49,16 @@ function App() {
               <ProtectedRoute>
                 <Layout>
                   <Dashboard />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/revenue"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Revenue />
                 </Layout>
               </ProtectedRoute>
             }

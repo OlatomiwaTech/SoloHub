@@ -188,7 +188,7 @@ const Dashboard = () => {
       icon: DollarSign,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
-      to: '/invoices',
+      to: '/revenue',
     },
     {
       title: "Unpaid Invoices",
