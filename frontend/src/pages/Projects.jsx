@@ -37,6 +37,7 @@ const Projects = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [formData, setFormData] = useState({
@@ -224,10 +225,24 @@ const Projects = () => {
     return labels[status] || status;
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.client?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredProjects = projects.filter((project) => {
+    const matchesStatus = statusFilter === 'ALL' || project.status === statusFilter;
+    const matchesSearch = !normalizedSearch ||
+      project.name.toLowerCase().includes(normalizedSearch) ||
+      project.client?.name?.toLowerCase().includes(normalizedSearch);
+    return matchesStatus && matchesSearch;
+  });
+  const hasActiveFilters = Boolean(normalizedSearch) || statusFilter !== 'ALL';
+  const projectStatusFilters = [
+    { value: 'ALL', label: 'All projects', count: projects.length },
+    ...['ACTIVE', 'ON_HOLD', 'COMPLETED', 'CANCELLED'].map((status) => ({
+      value: status,
+      label: getStatusLabel(status),
+      count: projects.filter((project) => project.status === status).length,
+    })),
+  ];
+  const formatProjectCurrency = (amount) => `₦${Number(amount || 0).toLocaleString('en-NG', { maximumFractionDigits: 2 })}`;
 
   return (
     <div className="space-y-6 bg-white">
@@ -260,6 +275,25 @@ const Projects = () => {
         />
       </div>
 
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Filter projects by status">
+        {projectStatusFilters.map((filter) => (
+          <button
+            key={filter.value}
+            type="button"
+            aria-pressed={statusFilter === filter.value}
+            onClick={() => setStatusFilter(filter.value)}
+            className={`inline-flex min-h-9 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 ${statusFilter === filter.value ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300'}`}
+          >
+            {filter.label}<span className="text-[11px] opacity-70">{filter.count}</span>
+          </button>
+        ))}
+        {!loading && projects.length > 0 && (
+          <span className="ml-auto text-xs text-slate-500" aria-live="polite">
+            Showing {filteredProjects.length} of {projects.length}
+          </span>
+        )}
+      </div>
+
       {/* Projects Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
         {loading ? (
@@ -271,16 +305,21 @@ const Projects = () => {
           <div className="p-8 text-center bg-white">
             <FolderOpen className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500 bg-white">
-              {searchTerm ? 'No projects match your search' : 'No projects yet'}
+              {hasActiveFilters ? 'No projects match these filters' : 'No projects yet'}
             </p>
-            <Button
-              onClick={() => handleOpenModal()}
-              variant="outline"
-              className="mt-3 bg-white"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add your first project
-            </Button>
+            {hasActiveFilters ? (
+              <Button
+                onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); }}
+                variant="outline"
+                className="mt-3 bg-white"
+              >
+                Clear filters
+              </Button>
+            ) : (
+              <Button onClick={() => handleOpenModal()} variant="outline" className="mt-3 bg-white">
+                <Plus className="mr-2 h-4 w-4" /> Add your first project
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto bg-white">
@@ -292,11 +331,22 @@ const Projects = () => {
                   <TableHead>Status</TableHead>
                   <TableHead>Rate</TableHead>
                   <TableHead>Invoices</TableHead>
+                  <TableHead>Invoiced</TableHead>
+                  <TableHead>Outstanding</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredProjects.map((project) => (
+                {filteredProjects.map((project) => {
+                  const projectInvoices = project.invoices || [];
+                  const invoicedTotal = projectInvoices
+                    .filter((invoice) => ['SENT', 'OVERDUE', 'PAID'].includes(invoice.status))
+                    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+                  const outstandingTotal = projectInvoices
+                    .filter((invoice) => ['SENT', 'OVERDUE'].includes(invoice.status))
+                    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+
+                  return (
                   <TableRow key={project.id} className="hover:bg-slate-50">
                     <TableCell className="font-medium text-slate-900">
                       {project.name}
@@ -319,6 +369,10 @@ const Projects = () => {
                       <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">
                         {project._count?.invoices || 0} invoices
                       </span>
+                    </TableCell>
+                    <TableCell className="font-medium text-slate-800">{formatProjectCurrency(invoicedTotal)}</TableCell>
+                    <TableCell className={outstandingTotal > 0 ? 'font-medium text-amber-700' : 'text-slate-500'}>
+                      {formatProjectCurrency(outstandingTotal)}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
@@ -356,7 +410,8 @@ const Projects = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
