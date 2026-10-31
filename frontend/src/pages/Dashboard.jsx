@@ -33,6 +33,7 @@ const Dashboard = () => {
   const [dashboardError, setDashboardError] = useState('');
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [recentInvoices, setRecentInvoices] = useState([]);
+  const [attentionInvoices, setAttentionInvoices] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
 
   // ✅ Fetch dashboard data on mount
@@ -71,6 +72,30 @@ const Dashboard = () => {
           amount: `₦${Number(inv.amount).toLocaleString('en-NG')}`,
           status: inv.status,
         }));
+
+        // Surface sent invoices that are overdue or due within the next week.
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const nextWeek = new Date(today);
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const needsFollowUp = invoices
+          .filter((invoice) => invoice.status === 'OVERDUE' || invoice.status === 'SENT')
+          .map((invoice) => {
+            const dueDate = new Date(invoice.dueDate);
+            dueDate.setHours(0, 0, 0, 0);
+            return {
+              id: invoice.id,
+              number: invoice.number,
+              client: invoice.project?.client?.name || 'Client unavailable',
+              amount: Number(invoice.amount) || 0,
+              dueDate: invoice.dueDate,
+              overdue: invoice.status === 'OVERDUE' || dueDate < today,
+              dueTimestamp: dueDate.getTime(),
+            };
+          })
+          .filter((invoice) => invoice.overdue || invoice.dueTimestamp <= nextWeek.getTime())
+          .sort((a, b) => a.dueTimestamp - b.dueTimestamp)
+          .slice(0, 4);
         
         // Revenue means money collected, grouped by payment date.
         const revenueMap = new Map();
@@ -101,6 +126,7 @@ const Dashboard = () => {
         });
         
         setRecentInvoices(recent);
+        setAttentionInvoices(needsFollowUp);
         setRevenueData(revenueChartData);
         
       } catch (error) {
@@ -202,7 +228,7 @@ const Dashboard = () => {
           </div>
           <div className="flex w-full sm:w-auto">
             <button
-              onClick={() => setIsWizardOpen(true)}
+              onClick={handleCreateInvoice}
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
@@ -210,6 +236,34 @@ const Dashboard = () => {
             </button>
           </div>
         </div>
+
+        {attentionInvoices.length > 0 && (
+          <section className="rounded-xl border border-amber-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="invoice-follow-up-title">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">Billing follow-up</p>
+                <h2 id="invoice-follow-up-title" className="mt-1 font-semibold text-slate-900">Invoices that need attention</h2>
+                <p className="mt-1 text-sm text-slate-500">Sent invoices that are overdue or due within 7 days.</p>
+              </div>
+              <Link to="/invoices" className="inline-flex items-center gap-1 self-start text-sm font-semibold text-emerald-700 hover:text-emerald-800 sm:self-auto">
+                Review invoices <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <ul className="mt-4 divide-y divide-slate-100">
+              {attentionInvoices.map((invoice) => (
+                <li key={invoice.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-slate-900">{invoice.client} <span className="font-normal text-slate-500">· {invoice.number}</span></p>
+                    <p className={`mt-1 text-xs font-medium ${invoice.overdue ? 'text-red-700' : 'text-amber-700'}`}>
+                      {invoice.overdue ? 'Overdue' : 'Due'} · {new Date(invoice.dueDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm font-semibold text-slate-900">₦{invoice.amount.toLocaleString('en-NG')}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
