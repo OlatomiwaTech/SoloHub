@@ -157,13 +157,19 @@ const Projects = () => {
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+  const handleDelete = async (project) => {
+    const invoiceCount = project._count?.invoices || 0;
+    if (invoiceCount > 0) {
+      toast.warning(`Delete or move this project's ${invoiceCount} ${invoiceCount === 1 ? 'invoice' : 'invoices'} before deleting the project.`);
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete "${project.name}"? This cannot be undone.`)) {
       return;
     }
 
     try {
-      await projectsAPI.delete(id);
+      await projectsAPI.delete(project.id);
       toast.success('Project deleted successfully!');
       fetchData();
     } catch (error) {
@@ -302,8 +308,10 @@ const Projects = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(project.id, project.name)}
+                          onClick={() => handleDelete(project)}
                           className="h-8 w-8 p-0 hover:bg-red-50"
+                          aria-label={`Delete ${project.name}`}
+                          title={project._count?.invoices ? 'Delete or move this project’s invoices first' : `Delete ${project.name}`}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>

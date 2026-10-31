@@ -134,13 +134,19 @@ const Clients = () => {
     }
   };
 
-  const handleDelete = async (id, name) => {
-    if (!confirm(`Are you sure you want to delete "${name}"? This cannot be undone.`)) {
+  const handleDelete = async (client) => {
+    const projectCount = client._count?.projects || 0;
+    if (projectCount > 0) {
+      toast.warning(`Delete or move this client's ${projectCount} ${projectCount === 1 ? 'project' : 'projects'} before deleting the client.`);
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete "${client.name}"? This cannot be undone.`)) {
       return;
     }
 
     try {
-      await clientsAPI.delete(id);
+      await clientsAPI.delete(client.id);
       toast.success('Client deleted successfully!');
       fetchClients();
     } catch (error) {
@@ -275,8 +281,10 @@ const Clients = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => handleDelete(client.id, client.name)}
+                          onClick={() => handleDelete(client)}
                           className="h-8 w-8 p-0 hover:bg-red-50"
+                          aria-label={`Delete ${client.name}`}
+                          title={client._count?.projects ? 'Delete or move this client’s projects first' : `Delete ${client.name}`}
                         >
                           <Trash2 className="h-4 w-4 text-red-600" />
                         </Button>
