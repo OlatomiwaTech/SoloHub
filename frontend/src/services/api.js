@@ -42,6 +42,9 @@ export const authAPI = {
   register: (data) => api.post('/auth/register', data),
   login: (data) => api.post('/auth/login', data),
   getMe: () => api.get('/auth/me'),
+  updateProfile: (data) => api.patch('/auth/profile', data),
+  changePassword: (data) => api.patch('/auth/password', data),
+  deleteAccount: (data) => api.delete('/auth/me', { data }),
 };
 
 // Clients API

@@ -75,8 +75,23 @@ const register = async (userData) => {
     setUser(null);
   };
 
+  const updateProfile = async (profile) => {
+    const response = await authAPI.updateProfile(profile);
+    const updatedUser = response.data.data.user;
+    localStorage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return updatedUser;
+  };
+
+  const changePassword = async (passwords) => authAPI.changePassword(passwords);
+
+  const deleteAccount = async (confirmation) => {
+    await authAPI.deleteAccount(confirmation);
+    logout();
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateProfile, changePassword, deleteAccount }}>
       {children}
     </AuthContext.Provider>
   );
