@@ -371,15 +371,14 @@ const Invoices = () => {
                                 size="sm"
                                 onClick={() => handleUpdateStatus(invoice.id, 'PAID')}
                                 className="h-8 w-8 p-0 hover:bg-emerald-50"
-                                title="Mark as Paid"
+                                title="Record manual payment"
+                                aria-label={`Record manual payment for invoice ${invoice.number}`}
                               >
                                 <CheckCircle className="h-4 w-4 text-emerald-600" />
                               </Button>
                               <PaystackPayment
                                 invoice={invoice}
                                 compact
-                                onPaymentSuccess={() => fetchInvoices()}
-                                onClose={() => {}}
                               />
                             </>
                           )}
@@ -471,12 +470,6 @@ const Invoices = () => {
                   <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                     <PaystackPayment
                       invoice={selectedInvoice}
-                      onPaymentSuccess={() => {
-                        fetchInvoices();
-                        setIsViewModalOpen(false);
-                        toast.success('Payment received! 🎉');
-                      }}
-                      onClose={() => {}}
                     />
                   </div>
                 )}
