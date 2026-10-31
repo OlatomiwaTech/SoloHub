@@ -175,7 +175,7 @@ const updateInvoiceStatus = async (req, res) => {
 
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
-      data: { status, paidAt: status === 'PAID' ? new Date() : existingInvoice.paidAt },
+      data: { status },
       include: invoiceInclude,
     });
     res.json({ success: true, message: 'Invoice status updated successfully', data: invoice });
