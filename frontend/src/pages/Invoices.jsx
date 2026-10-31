@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/dialog';
 import InvoicePDFDownloadButton from '../components/InvoicePDFDownloadButton';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
+import InvoiceEmailDraftButton from '../components/InvoiceEmailDraftButton';
 import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
@@ -332,6 +333,7 @@ const Invoices = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          <InvoiceEmailDraftButton invoice={invoice} />
                           <InvoicePDFDownloadButton invoice={invoice} />
 
                           {/* View Button */}
@@ -485,7 +487,9 @@ const Invoices = () => {
                 </Button>
 
                 <InvoicePDFDownloadButton invoice={selectedInvoice} fullWidth />
+                <InvoiceEmailDraftButton invoice={selectedInvoice} fullWidth />
               </div>
+              <p className="text-right text-xs text-slate-500">The email opens in your mail app. Attach the invoice PDF before sending.</p>
             </div>
           )}
         </DialogContent>

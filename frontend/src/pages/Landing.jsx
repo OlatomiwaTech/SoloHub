@@ -158,7 +158,7 @@ const capabilities = [
 
 const questions = [
   ['What does SoloHub help me manage?', 'Client records, project status, invoices, invoice PDFs, and an overview of business activity.'],
-  ['Can I send invoices directly from SoloHub?', 'Invoice email delivery is not available yet. You can download the invoice PDF and share it with your client yourself.'],
+  ['Can I send invoices directly from SoloHub?', 'SoloHub can prepare an email draft with the invoice details in your mail app. Attach the invoice PDF before sending; SoloHub does not send the email for you.'],
   ['Can clients pay invoices online?', 'SoloHub records invoice status and payments. A client-facing invoice portal or public checkout flow is not currently available.'],
   ['Which currency does SoloHub use?', 'Invoice amounts and payment records currently use Nigerian naira (NGN). Multi-currency invoicing is not available.'],
 ];
