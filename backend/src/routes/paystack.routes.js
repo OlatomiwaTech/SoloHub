@@ -22,8 +22,8 @@ router.post('/initialize', async (req, res) => {
     if (!invoice) {
       return res.status(404).json({ success: false, message: 'Invoice not found' });
     }
-    if (['PAID', 'CANCELLED'].includes(invoice.status)) {
-      return res.status(400).json({ success: false, message: 'This invoice cannot be paid' });
+    if (!['SENT', 'OVERDUE'].includes(invoice.status)) {
+      return res.status(400).json({ success: false, message: 'Only sent or overdue invoices can be paid' });
     }
 
     const clientEmail = invoice.project?.client?.email;
@@ -81,6 +81,10 @@ router.get('/verify/:reference', async (req, res) => {
     const paid = payment.status === 'success'
       && payment.currency === 'NGN'
       && Number(payment.amount) === expectedAmount;
+
+    if (payment.status === 'success' && !paid) {
+      return res.status(400).json({ success: false, message: 'Payment amount or currency does not match the invoice' });
+    }
 
     if (paid && invoice.status !== 'PAID') {
       await prisma.invoice.updateMany({

@@ -478,7 +478,7 @@ const Invoices = () => {
               )}
 
               <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
-                {selectedInvoice && selectedInvoice.status !== 'PAID' && selectedInvoice.status !== 'CANCELLED' && (
+                {selectedInvoice && ['SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
                   <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                     <PaystackPayment
                       invoice={selectedInvoice}

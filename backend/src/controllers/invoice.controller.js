@@ -57,10 +57,21 @@ const getInvoiceById = async (req, res) => {
 
 const createInvoice = async (req, res) => {
   try {
-    const { amount, description, dueDate, projectId, status = 'DRAFT', notes } = req.body;
+    const { amount, description, dueDate, projectId, status, notes } = req.body;
     const userId = req.user.id;
     if (!amount || !projectId || !dueDate) {
       return res.status(400).json({ success: false, message: 'Amount, project ID, and due date are required' });
+    }
+    const numericAmount = Number(amount);
+    const parsedDueDate = new Date(dueDate);
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
+    }
+    if (Number.isNaN(parsedDueDate.getTime())) {
+      return res.status(400).json({ success: false, message: 'Due date is invalid' });
+    }
+    if (status && status !== 'DRAFT') {
+      return res.status(400).json({ success: false, message: 'New invoices must start as drafts' });
     }
 
     const project = await prisma.project.findFirst({ where: { id: projectId, userId } });
@@ -77,10 +88,10 @@ const createInvoice = async (req, res) => {
     const invoice = await prisma.invoice.create({
       data: {
         number,
-        amount: amount.toFixed(2),
+        amount: numericAmount.toFixed(2),
         description: description || '',
-        dueDate: new Date(dueDate),
-        status,
+        dueDate: parsedDueDate,
+        status: 'DRAFT',
         notes: notes || '',
         projectId,
         userId,
@@ -98,18 +109,29 @@ const updateInvoice = async (req, res) => {
   try {
     const existingInvoice = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!existingInvoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
-    if (existingInvoice.status === 'PAID' && req.body.status !== 'PAID') {
+    if (existingInvoice.status === 'PAID') {
       return res.status(400).json({ success: false, message: 'Cannot modify a paid invoice' });
     }
+    if (req.body.status !== undefined) {
+      return res.status(400).json({ success: false, message: 'Update invoice status using the status endpoint' });
+    }
 
-    const { amount, description, dueDate, status, notes } = req.body;
+    const { amount, description, dueDate, notes } = req.body;
+    const numericAmount = amount === undefined ? null : Number(amount);
+    if (numericAmount !== null && (!Number.isFinite(numericAmount) || numericAmount <= 0)) {
+      return res.status(400).json({ success: false, message: 'Amount must be a positive number' });
+    }
+    const parsedDueDate = dueDate === undefined ? null : new Date(dueDate);
+    if (dueDate !== undefined && (!dueDate || Number.isNaN(parsedDueDate.getTime()))) {
+      return res.status(400).json({ success: false, message: 'Due date is invalid' });
+    }
+
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
       data: {
-        amount: amount === undefined ? existingInvoice.amount : parseFloat(amount).toFixed(2),
+        amount: numericAmount === null ? existingInvoice.amount : numericAmount.toFixed(2),
         description: description === undefined ? existingInvoice.description : description,
-        dueDate: dueDate ? new Date(dueDate) : existingInvoice.dueDate,
-        status: status || existingInvoice.status,
+        dueDate: parsedDueDate || existingInvoice.dueDate,
         notes: notes === undefined ? existingInvoice.notes : notes,
       },
       include: invoiceInclude,
@@ -137,14 +159,19 @@ const deleteInvoice = async (req, res) => {
 const updateInvoiceStatus = async (req, res) => {
   try {
     const { status } = req.body;
-    const validStatuses = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'];
+    const validStatuses = ['DRAFT', 'SENT', 'OVERDUE', 'CANCELLED'];
     if (!validStatuses.includes(status)) return res.status(400).json({ success: false, message: 'Invalid status' });
-    if (status === 'PAID') {
-      return res.status(400).json({ success: false, message: 'Use payment verification or record a manual payment' });
-    }
 
     const existingInvoice = await prisma.invoice.findFirst({ where: { id: req.params.id, userId: req.user.id } });
     if (!existingInvoice) return res.status(404).json({ success: false, message: 'Invoice not found' });
+    const allowedTransitions = {
+      DRAFT: ['SENT', 'CANCELLED'],
+      SENT: ['OVERDUE', 'CANCELLED'],
+      OVERDUE: ['SENT', 'CANCELLED'],
+    };
+    if (!allowedTransitions[existingInvoice.status]?.includes(status)) {
+      return res.status(400).json({ success: false, message: 'This invoice status transition is not allowed' });
+    }
 
     const invoice = await prisma.invoice.update({
       where: { id: req.params.id },
