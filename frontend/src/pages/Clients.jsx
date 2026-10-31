@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Search, Users, X } from 'lucide-react';
 import { clientsAPI } from '../services/api';
 import { Button } from '@/components/ui/button';
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -34,6 +35,8 @@ const Clients = () => {
     address: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchClients = async () => {
     try {
@@ -141,18 +144,23 @@ const Clients = () => {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${client.name}"? This cannot be undone.`)) {
-      return;
-    }
+    setDeleteTarget(client);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await clientsAPI.delete(client.id);
+      await clientsAPI.delete(deleteTarget.id);
       toast.success('Client deleted successfully!');
+      setDeleteTarget(null);
       fetchClients();
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to delete client';
       toast.error(message);
       console.error('Delete client error:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -387,6 +395,14 @@ const Clients = () => {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDeleteDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={`Delete ${deleteTarget?.name || 'client'}?`}
+        description="This permanently removes the client record. This action cannot be undone."
+        onConfirm={confirmDelete}
+        isPending={isDeleting}
+      />
     </div>
   );
 };

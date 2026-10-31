@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Search, FolderOpen, Link } from 'lucide-react';
 import { projectsAPI, clientsAPI } from '../services/api';
 import { Button } from '@/components/ui/button';
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -43,6 +44,8 @@ const Projects = () => {
     clientId: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -164,18 +167,23 @@ const Projects = () => {
       return;
     }
 
-    if (!confirm(`Are you sure you want to delete "${project.name}"? This cannot be undone.`)) {
-      return;
-    }
+    setDeleteTarget(project);
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await projectsAPI.delete(project.id);
+      await projectsAPI.delete(deleteTarget.id);
       toast.success('Project deleted successfully!');
+      setDeleteTarget(null);
       fetchData();
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to delete project';
       toast.error(message);
       console.error('Delete project error:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -460,6 +468,14 @@ const Projects = () => {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDeleteDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={`Delete ${deleteTarget?.name || 'project'}?`}
+        description="This permanently removes the project record. This action cannot be undone."
+        onConfirm={confirmDelete}
+        isPending={isDeleting}
+      />
     </div>
   );
 };

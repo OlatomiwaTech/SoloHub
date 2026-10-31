@@ -38,6 +38,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import InvoicePDFDownloadButton from '../components/InvoicePDFDownloadButton';
+import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import PaystackPayment from '../components/PaystackPayment';
 
 const Invoices = () => {
@@ -48,6 +49,8 @@ const Invoices = () => {
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [totals, setTotals] = useState({
     total: 0,
     paid: 0,
@@ -106,19 +109,22 @@ const Invoices = () => {
     }
   };
 
-  const handleDelete = async (id, number) => {
-    if (!confirm(`Are you sure you want to delete invoice ${number}?`)) {
-      return;
-    }
+  const handleDelete = (invoice) => setDeleteTarget(invoice);
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await invoicesAPI.delete(id);
+      await invoicesAPI.delete(deleteTarget.id);
       toast.success('Invoice deleted successfully!');
+      setDeleteTarget(null);
       fetchInvoices();
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to delete invoice';
       toast.error(message);
       console.error('Delete invoice error:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -353,7 +359,7 @@ const Invoices = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDelete(invoice.id, invoice.number)}
+                                onClick={() => handleDelete(invoice)}
                                 className="h-8 w-8 p-0 hover:bg-red-50"
                               >
                                 <Trash2 className="h-4 w-4 text-red-600" />
@@ -492,6 +498,14 @@ const Invoices = () => {
           setIsWizardOpen(false);
           fetchInvoices();
         }}
+      />
+      <ConfirmDeleteDialog
+        open={Boolean(deleteTarget)}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title={`Delete invoice ${deleteTarget?.number || ''}?`}
+        description="This permanently removes this invoice and its record from your workspace. This action cannot be undone."
+        onConfirm={confirmDelete}
+        isPending={isDeleting}
       />
     </div>
   );
