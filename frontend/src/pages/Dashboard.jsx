@@ -36,6 +36,8 @@ const Dashboard = () => {
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [attentionInvoices, setAttentionInvoices] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
+  const [chartMonths, setChartMonths] = useState(6);
+  const [recentStatusFilter, setRecentStatusFilter] = useState('ALL');
 
   // ✅ Fetch dashboard data on mount
   useEffect(() => {
@@ -62,7 +64,7 @@ const Dashboard = () => {
         const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
         
         // Get recent invoices (last 3)
-        const recent = invoices.slice(0, 3).map(inv => ({
+        const recent = invoices.slice(0, 5).map(inv => ({
           id: inv.number,
           client: inv.project?.client?.name || 'N/A',
           date: new Date(inv.createdAt).toLocaleDateString('en-NG', {
@@ -108,8 +110,8 @@ const Dashboard = () => {
         });
 
         const now = new Date();
-        const revenueChartData = Array.from({ length: 6 }, (_, index) => {
-          const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+        const revenueChartData = Array.from({ length: 12 }, (_, index) => {
+          const date = new Date(now.getFullYear(), now.getMonth() - 11 + index, 1);
           const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
           return {
             month: date.toLocaleDateString('en-NG', { month: 'short', year: '2-digit' }),
@@ -152,6 +154,7 @@ const Dashboard = () => {
       icon: DollarSign,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
+      to: '/invoices',
     },
     {
       title: "Unpaid Invoices",
@@ -160,6 +163,7 @@ const Dashboard = () => {
       icon: Clock,
       iconBg: "bg-amber-100",
       iconColor: "text-amber-600",
+      to: '/invoices',
     },
     {
       title: "Active Projects",
@@ -168,6 +172,7 @@ const Dashboard = () => {
       icon: Briefcase,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
+      to: '/projects',
     },
     {
       title: "Total Clients",
@@ -176,6 +181,7 @@ const Dashboard = () => {
       icon: Users,
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
+      to: '/clients',
     },
   ];
 
@@ -185,6 +191,10 @@ const Dashboard = () => {
     { label: 'Create an invoice', complete: dashboardData.totalInvoices > 0, onClick: handleCreateInvoice },
   ];
   const completedSteps = onboardingSteps.filter((step) => step.complete).length;
+  const visibleRevenueData = revenueData.slice(-chartMonths);
+  const visibleRecentInvoices = recentStatusFilter === 'ALL'
+    ? recentInvoices
+    : recentInvoices.filter((invoice) => invoice.status === recentStatusFilter);
 
   function handleCreateInvoice() {
     if (dashboardData.totalClients === 0) navigate('/clients');
@@ -228,10 +238,24 @@ const Dashboard = () => {
               Welcome back, {user?.fullName || "there"}!
             </h1>
           </div>
-          <div className="flex w-full sm:w-auto">
+          <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:justify-end">
+            <button
+              type="button"
+              onClick={() => navigate('/clients?new=1')}
+              className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 sm:flex-none"
+            >
+              <Users className="h-4 w-4" /> Add client
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate('/projects?new=1')}
+              className="inline-flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600 sm:flex-none"
+            >
+              <Briefcase className="h-4 w-4" /> Add project
+            </button>
             <button
               onClick={handleCreateInvoice}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 sm:flex-none"
+              className="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700 sm:flex-none"
             >
               <Plus className="h-4 w-4" />
               New Invoice
@@ -272,8 +296,9 @@ const Dashboard = () => {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {stats.map((stat, index) => (
-            <Card key={index} className="border-slate-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+          {stats.map((stat) => (
+            <Link key={stat.title} to={stat.to} className="block rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-700">
+            <Card className="h-full border-slate-200 bg-white shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-md">
               <CardHeader className="flex flex-row items-center justify-between pb-1">
                 <CardTitle className="text-xs font-medium uppercase tracking-wide text-slate-500">
                   {stat.title}
@@ -285,8 +310,10 @@ const Dashboard = () => {
               <CardContent>
                 <div className="text-xl font-bold text-slate-900">{stat.value}</div>
                 <p className="pt-1 text-xs text-slate-400">{stat.description}</p>
+                <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">View details <ArrowRight className="h-3 w-3" /></span>
               </CardContent>
             </Card>
+            </Link>
           ))}
         </div>
 
@@ -313,21 +340,34 @@ const Dashboard = () => {
 
         {/* Chart */}
         <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="font-semibold text-slate-900">Revenue Trend</h3>
-              <p className="mt-1 text-xs text-slate-400">Paid invoices by payment month · last 6 months</p>
+              <p className="mt-1 text-xs text-slate-400">Paid invoices by payment month · last {chartMonths} months</p>
+            </div>
+            <div className="inline-flex self-start rounded-lg bg-slate-100 p-1" role="group" aria-label="Revenue chart period">
+              {[6, 12].map((months) => (
+                <button
+                  key={months}
+                  type="button"
+                  aria-pressed={chartMonths === months}
+                  onClick={() => setChartMonths(months)}
+                  className={`rounded-md px-3 py-1.5 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 ${chartMonths === months ? 'bg-white text-emerald-800 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                >
+                  {months} months
+                </button>
+              ))}
             </div>
           </div>
-          {revenueData.some((month) => month.revenue > 0) ? (
+          {visibleRevenueData.some((month) => month.revenue > 0) ? (
             <ResponsiveContainer width="100%" height={250}>
-              <LineChart data={revenueData}>
+              <LineChart data={visibleRevenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="month" stroke="#94a3b8" fontSize={12} />
                 <YAxis
                   stroke="#94a3b8"
                   fontSize={12}
-                  tickFormatter={(value) => `₦${value / 1000}K`}
+                  tickFormatter={(value) => value >= 1000000 ? `₦${(value / 1000000).toFixed(1)}M` : value >= 1000 ? `₦${(value / 1000).toFixed(0)}K` : `₦${value}`}
                 />
                 <Tooltip
                   formatter={(value) => [`₦${value.toLocaleString()}`, "Revenue"]}
@@ -349,21 +389,42 @@ const Dashboard = () => {
             </ResponsiveContainer>
           ) : (
             <div className="flex items-center justify-center h-[250px] text-slate-400">
-              <p>No revenue data available yet</p>
+              <p>No paid invoices in the last {chartMonths} months.</p>
             </div>
           )}
         </div>
 
         {/* Recent Invoices */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-slate-900">Recent Invoices</h3>
-            <Link to="/invoices" className="text-emerald-600 text-sm font-medium hover:underline">
-              View all
-            </Link>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="font-semibold text-slate-900">Recent Invoices</h3>
+              <p className="mt-1 text-xs text-slate-500">Filter the latest five by status.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {['ALL', 'DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'].map((status) => (
+                <button
+                  key={status}
+                  type="button"
+                  aria-pressed={recentStatusFilter === status}
+                  onClick={() => setRecentStatusFilter(status)}
+                  className={`rounded-full border px-2.5 py-1 text-xs font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700 ${recentStatusFilter === status ? 'border-emerald-600 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-white text-slate-600 hover:border-emerald-300'}`}
+                >
+                  {status === 'ALL' ? 'All' : status.charAt(0) + status.slice(1).toLowerCase()}
+                </button>
+              ))}
+              <Link to="/invoices" className="ml-1 inline-flex items-center gap-1 text-emerald-700 text-sm font-medium hover:underline">
+                View all <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           </div>
           {recentInvoices.length > 0 ? (
             <div className="overflow-x-auto">
+              {visibleRecentInvoices.length === 0 && (
+                <p className="mb-2 rounded-lg bg-slate-50 p-4 text-center text-sm text-slate-500" role="status">
+                  No recent {recentStatusFilter.toLowerCase()} invoices.
+                </p>
+              )}
               <table className="w-full text-sm">
                 <thead className="text-slate-500 border-b">
                   <tr>
@@ -375,7 +436,7 @@ const Dashboard = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {recentInvoices.map((invoice, index) => (
+                  {visibleRecentInvoices.map((invoice, index) => (
                     <tr key={index} className="border-b last:border-0 hover:bg-slate-50 transition">
                       <td className="py-3 font-medium text-slate-900">{invoice.id}</td>
                       <td className="py-3 text-slate-700">{invoice.client}</td>

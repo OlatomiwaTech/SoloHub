@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Search, Users, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, X, Eye, FilePlus } from 'lucide-react';
 import { clientsAPI } from '../services/api';
+import InvoiceWizard from '../components/InvoiceWizard';
 import { Button } from '@/components/ui/button';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
@@ -23,6 +25,7 @@ import {
 } from '@/components/ui/table';
 
 const Clients = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,6 +38,12 @@ const Clients = () => {
     address: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [viewingClient, setViewingClient] = useState(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState('');
+  const [isInvoiceWizardOpen, setIsInvoiceWizardOpen] = useState(false);
+  const [invoiceProjectId, setInvoiceProjectId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -79,6 +88,18 @@ const Clients = () => {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return;
+    setEditingClient(null);
+    setFormData({ name: '', email: '', phone: '', address: '' });
+    setIsModalOpen(true);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('new');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleOpenModal = (client = null) => {
     if (client) {
@@ -146,6 +167,44 @@ const Clients = () => {
 
     setDeleteTarget(client);
   };
+
+  const handleViewClient = async (client) => {
+    setViewingClient(client);
+    setDetailsError('');
+    setIsDetailsOpen(true);
+    setIsDetailsLoading(true);
+    try {
+      const response = await clientsAPI.getById(client.id);
+      setViewingClient(response.data.data);
+    } catch (error) {
+      setDetailsError(error.response?.data?.message || 'Could not load this client’s work history.');
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
+
+  const startInvoiceForProject = (projectId) => {
+    setIsDetailsOpen(false);
+    setInvoiceProjectId(projectId);
+    setIsInvoiceWizardOpen(true);
+  };
+
+  const clientProjects = viewingClient?.projects || [];
+  const clientInvoices = clientProjects.flatMap((project) => project.invoices || []);
+  const billedTotal = clientInvoices
+    .filter((invoice) => invoice.status !== 'CANCELLED')
+    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const collectedTotal = clientInvoices
+    .filter((invoice) => invoice.status === 'PAID')
+    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const outstandingTotal = clientInvoices
+    .filter((invoice) => ['DRAFT', 'SENT', 'OVERDUE'].includes(invoice.status))
+    .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+  const formatClientCurrency = (amount) => new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: 'NGN',
+    maximumFractionDigits: 2,
+  }).format(amount || 0);
 
   const confirmDelete = async () => {
     if (!deleteTarget) return;
@@ -281,6 +340,16 @@ const Clients = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => handleViewClient(client)}
+                          className="h-8 w-8 p-0 hover:bg-emerald-50"
+                          aria-label={`View ${client.name} overview`}
+                          title={`View ${client.name} overview`}
+                        >
+                          <Eye className="h-4 w-4 text-emerald-700" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleOpenModal(client)}
                           className="h-8 w-8 p-0 hover:bg-blue-50"
                         >
@@ -395,6 +464,99 @@ const Clients = () => {
           </form>
         </DialogContent>
       </Dialog>
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto bg-white sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{viewingClient?.name || 'Client overview'}</DialogTitle>
+            <DialogDescription>
+              {viewingClient?.email || viewingClient?.phone || 'Client activity and billing history'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {isDetailsLoading ? (
+            <div className="grid min-h-40 place-items-center text-sm text-slate-500" role="status">
+              Loading client activity…
+            </div>
+          ) : detailsError ? (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900" role="alert">
+              {detailsError}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <p className="text-xs font-medium text-slate-500">Billed</p>
+                  <p className="mt-1 text-lg font-semibold text-slate-900">{formatClientCurrency(billedTotal)}</p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+                  <p className="text-xs font-medium text-emerald-700">Collected</p>
+                  <p className="mt-1 text-lg font-semibold text-emerald-800">{formatClientCurrency(collectedTotal)}</p>
+                </div>
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="text-xs font-medium text-amber-700">Outstanding</p>
+                  <p className="mt-1 text-lg font-semibold text-amber-800">{formatClientCurrency(outstandingTotal)}</p>
+                </div>
+              </div>
+
+              <section aria-labelledby="client-projects-title">
+                <h3 id="client-projects-title" className="text-sm font-semibold text-slate-900">Projects</h3>
+                {clientProjects.length ? (
+                  <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    {clientProjects.map((project) => {
+                      const invoicesForProject = project.invoices || [];
+                      const projectBilled = invoicesForProject
+                        .filter((invoice) => invoice.status !== 'CANCELLED')
+                        .reduce((total, invoice) => total + Number(invoice.amount || 0), 0);
+                      return (
+                        <li key={project.id} className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-900">{project.name}</p>
+                            <p className="mt-1 text-xs text-slate-500">
+                              {project.status.replaceAll('_', ' ')} · {invoicesForProject.length} {invoicesForProject.length === 1 ? 'invoice' : 'invoices'} · {formatClientCurrency(projectBilled)} billed
+                            </p>
+                          </div>
+                          <Button size="sm" variant="outline" onClick={() => startInvoiceForProject(project.id)}>
+                            <FilePlus className="mr-2 h-4 w-4" /> Create invoice
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className="mt-2 rounded-xl border border-dashed border-slate-300 p-5 text-center text-sm text-slate-500">
+                    This client has no projects yet. Add a project before creating an invoice.
+                  </div>
+                )}
+              </section>
+
+              <section aria-labelledby="client-invoices-title">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 id="client-invoices-title" className="text-sm font-semibold text-slate-900">Recent invoices</h3>
+                  <span className="text-xs text-slate-500">{clientInvoices.length} total</span>
+                </div>
+                {clientInvoices.length ? (
+                  <ul className="mt-2 divide-y divide-slate-100 rounded-xl border border-slate-200">
+                    {clientProjects.flatMap((project) => (project.invoices || []).map((invoice) => ({ ...invoice, projectName: project.name })))
+                      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+                      .slice(0, 5)
+                      .map((invoice) => (
+                        <li key={invoice.id} className="flex items-center justify-between gap-3 p-3 text-sm">
+                          <span className="min-w-0 truncate text-slate-700">{invoice.number} · {invoice.projectName}</span>
+                          <span className="shrink-0 text-right">
+                            <span className="block font-medium text-slate-900">{formatClientCurrency(Number(invoice.amount))}</span>
+                            <span className="text-xs text-slate-500">{invoice.status}</span>
+                          </span>
+                        </li>
+                      ))}
+                  </ul>
+                ) : (
+                  <p className="mt-2 rounded-xl bg-slate-50 p-4 text-sm text-slate-500">No invoices for this client yet.</p>
+                )}
+              </section>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <ConfirmDeleteDialog
         open={Boolean(deleteTarget)}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
@@ -402,6 +564,15 @@ const Clients = () => {
         description="This permanently removes the client record. This action cannot be undone."
         onConfirm={confirmDelete}
         isPending={isDeleting}
+      />
+      <InvoiceWizard
+        isOpen={isInvoiceWizardOpen}
+        initialProjectId={invoiceProjectId}
+        onClose={() => {
+          setIsInvoiceWizardOpen(false);
+          setInvoiceProjectId(null);
+          fetchClients();
+        }}
       />
     </div>
   );

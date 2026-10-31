@@ -54,7 +54,22 @@ const getClientById = async (req, res) => {
         userId,
       },
       include: {
-        projects: true,
+        projects: {
+          orderBy: { createdAt: 'desc' },
+          include: {
+            invoices: {
+              orderBy: { createdAt: 'desc' },
+              select: {
+                id: true,
+                number: true,
+                amount: true,
+                status: true,
+                dueDate: true,
+                createdAt: true,
+              },
+            },
+          },
+        },
       },
     });
 

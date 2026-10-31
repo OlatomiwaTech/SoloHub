@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { Plus, Pencil, Trash2, Search, FolderOpen, Link, FilePlus } from 'lucide-react';
 import { projectsAPI, clientsAPI } from '../services/api';
@@ -31,6 +32,7 @@ import {
 } from '@/components/ui/table';
 
 const Projects = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -122,6 +124,18 @@ const Projects = () => {
     }
     setIsModalOpen(true);
   };
+
+  useEffect(() => {
+    if (searchParams.get('new') !== '1') return;
+    setEditingProject(null);
+    setFormData({ name: '', description: '', status: 'ACTIVE', rate: '', clientId: '' });
+    setIsModalOpen(true);
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current);
+      next.delete('new');
+      return next;
+    }, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
