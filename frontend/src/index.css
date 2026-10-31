@@ -25,6 +25,7 @@
   --radius: 0.75rem;
 
   font-family:
+    Manrope,
     Roboto,
     ui-sans-serif,
     system-ui,
@@ -33,6 +34,7 @@
     "Segoe UI",
     sans-serif;
   font-optical-sizing: auto;
+  font-feature-settings: "ss01" on;
 
   color: var(--foreground);
   background: var(--background);
