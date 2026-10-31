@@ -10,9 +10,9 @@ const PublicLayout = ({ children }) => (
           <span className="text-xl font-bold tracking-tight">SoloHub</span>
         </Link>
         <div className="hidden items-center gap-7 text-sm text-slate-600 md:flex">
-          <Link className="transition hover:text-emerald-700" to="/features">Features</Link>
-          <Link className="transition hover:text-emerald-700" to="/how-it-works">How it works</Link>
-          <Link className="transition hover:text-emerald-700" to="/faq">FAQ</Link>
+          <a className="transition hover:text-emerald-700" href="#features">Features</a>
+          <a className="transition hover:text-emerald-700" href="#how-it-works">How it works</a>
+          <a className="transition hover:text-emerald-700" href="#faq">FAQ</a>
         </div>
         <div className="flex items-center gap-2 sm:gap-4">
           <Link to="/login" className="rounded-lg px-3 py-2 text-sm font-medium text-slate-600 transition hover:text-emerald-700">Log in</Link>
@@ -30,9 +30,9 @@ const PublicLayout = ({ children }) => (
         <Link to="/" className="flex items-center gap-2 font-bold tracking-tight"><span className="grid h-7 w-7 place-items-center rounded-lg bg-emerald-600 text-xs text-white">S</span> SoloHub</Link>
         <p className="text-xs text-slate-500">A clearer home for your independent work.</p>
         <div className="flex flex-wrap items-center gap-5 text-xs text-slate-600">
-          <Link to="/features" className="transition hover:text-emerald-700">Features</Link>
-          <Link to="/how-it-works" className="transition hover:text-emerald-700">How it works</Link>
-          <Link to="/faq" className="transition hover:text-emerald-700">FAQ</Link>
+          <a href="#features" className="transition hover:text-emerald-700">Features</a>
+          <a href="#how-it-works" className="transition hover:text-emerald-700">How it works</a>
+          <a href="#faq" className="transition hover:text-emerald-700">FAQ</a>
           <Link to="/login" className="transition hover:text-emerald-700">Log in</Link>
         </div>
       </div>
