@@ -31,7 +31,7 @@ const invoiceSchema = z.object({
   dueDate: z.string().min(1, "Please select a due date").refine((value) => !Number.isNaN(Date.parse(value)), "Please enter a valid due date"),
 });
 
-const InvoiceWizard = ({ isOpen, onClose }) => {
+const InvoiceWizard = ({ isOpen, onClose, initialProjectId = null }) => {
   const [step, setStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
@@ -108,6 +108,16 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
 
   const selectedClient = clients.find((client) => client.id === clientId);
   const selectedProject = projects.find((project) => project.id === projectId);
+
+  useEffect(() => {
+    if (!isOpen || !initialProjectId || optionsLoading) return;
+    const project = projects.find((item) => item.id === initialProjectId);
+    if (!project) return;
+
+    setValue('clientId', project.clientId);
+    setValue('projectId', project.id);
+    setStep(3);
+  }, [isOpen, initialProjectId, optionsLoading, projects, setValue]);
 
   const handleNext = () => {
     if (step === 1 && !clientId) {

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Search, FolderOpen, Link } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, FolderOpen, Link, FilePlus } from 'lucide-react';
 import { projectsAPI, clientsAPI } from '../services/api';
+import InvoiceWizard from '../components/InvoiceWizard';
 import { Button } from '@/components/ui/button';
 import ConfirmDeleteDialog from '../components/ConfirmDeleteDialog';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,8 @@ const Projects = () => {
     clientId: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInvoiceWizardOpen, setIsInvoiceWizardOpen] = useState(false);
+  const [invoiceProjectId, setInvoiceProjectId] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -308,6 +311,19 @@ const Projects = () => {
                         <Button
                           variant="ghost"
                           size="sm"
+                          onClick={() => {
+                            setInvoiceProjectId(project.id);
+                            setIsInvoiceWizardOpen(true);
+                          }}
+                          className="h-8 w-8 p-0 hover:bg-emerald-50"
+                          aria-label={`Create invoice for ${project.name}`}
+                          title={`Create invoice for ${project.name}`}
+                        >
+                          <FilePlus className="h-4 w-4 text-emerald-600" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
                           onClick={() => handleOpenModal(project)}
                           className="h-8 w-8 p-0 hover:bg-blue-50"
                         >
@@ -475,6 +491,15 @@ const Projects = () => {
         description="This permanently removes the project record. This action cannot be undone."
         onConfirm={confirmDelete}
         isPending={isDeleting}
+      />
+      <InvoiceWizard
+        isOpen={isInvoiceWizardOpen}
+        initialProjectId={invoiceProjectId}
+        onClose={() => {
+          setIsInvoiceWizardOpen(false);
+          setInvoiceProjectId(null);
+          fetchData();
+        }}
       />
     </div>
   );
