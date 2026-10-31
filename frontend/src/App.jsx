@@ -12,6 +12,9 @@ import Settings from './pages/Settings'; // ✅ Import Settings
 import Login from './pages/Login';
 import Register from './pages/Register';
 import PaymentResult from './pages/PaymentResult';
+import Features from './pages/Features';
+import HowItWorks from './pages/HowItWorks';
+import FAQ from './pages/FAQ';
 
 function App() {
   return (
@@ -20,6 +23,9 @@ function App() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
+        <Route path="/features" element={<Features />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/faq" element={<FAQ />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
