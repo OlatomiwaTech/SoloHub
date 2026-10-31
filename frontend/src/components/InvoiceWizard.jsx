@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -20,9 +21,14 @@ import { Check, ChevronRight, ChevronLeft } from "lucide-react";
 const invoiceSchema = z.object({
   clientId: z.string().min(1, "Please select a client"),
   projectId: z.string().min(1, "Please select a project"),
-  amount: z.string().min(1, "Please enter an amount"),
-  description: z.string().min(3, "Please enter a description"),
-  dueDate: z.string().min(1, "Please select a due date"),
+}).extend({
+  amount: z.string()
+    .trim()
+    .min(1, "Please enter an amount")
+    .refine((value) => Number.isFinite(Number(value)) && Number(value) > 0, "Amount must be greater than zero")
+    .refine((value) => Number(value) <= 99999999.99, "Amount must be less than ₦100,000,000"),
+  description: z.string().trim().min(3, "Please enter a description"),
+  dueDate: z.string().min(1, "Please select a due date").refine((value) => !Number.isNaN(Date.parse(value)), "Please enter a valid due date"),
 });
 
 const InvoiceWizard = ({ isOpen, onClose }) => {
@@ -31,12 +37,17 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
   const [generatedInvoice, setGeneratedInvoice] = useState(null);
   const [clients, setClients] = useState([]);
   const [projects, setProjects] = useState([]);
+  const [optionsLoading, setOptionsLoading] = useState(false);
+  const [optionsError, setOptionsError] = useState('');
+  const [optionsAttempt, setOptionsAttempt] = useState(0);
 
   useEffect(() => {
     if (!isOpen) return undefined;
 
     let cancelled = false;
     const loadOptions = async () => {
+      setOptionsLoading(true);
+      setOptionsError('');
       try {
         const [clientsResponse, projectsResponse] = await Promise.all([
           clientsAPI.getAll(),
@@ -48,9 +59,11 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
         }
       } catch (error) {
         if (!cancelled) {
-          toast.error('Failed to load clients and projects');
+          setOptionsError('We could not load your clients and projects. Check your connection and try again.');
           console.error('Load invoice options error:', error);
         }
+      } finally {
+        if (!cancelled) setOptionsLoading(false);
       }
     };
 
@@ -58,7 +71,7 @@ const InvoiceWizard = ({ isOpen, onClose }) => {
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [isOpen, optionsAttempt]);
 
   const {
     register,
@@ -128,8 +141,6 @@ const onSubmit = async (data) => {
       projectId: data.projectId,
     };
 
-    console.log('Sending invoice data:', invoiceData); // Add this line for debugging
-
     const response = await invoicesAPI.create(invoiceData);
     const newInvoice = response.data.data;
 
@@ -137,7 +148,6 @@ const onSubmit = async (data) => {
     toast.success('Invoice generated successfully!');
     setStep(4);
   } catch (error) {
-    console.error('Full error:', error); // Add this line
     const message = error.response?.data?.message || 'Failed to create invoice';
     toast.error(message);
   } finally {
@@ -202,11 +212,26 @@ const onSubmit = async (data) => {
                 <Label className="text-sm font-medium text-slate-700 bg-white">
                   Select Client
                 </Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white">
+                {optionsError ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-5" role="alert">
+                    <p className="text-sm font-medium text-amber-900">{optionsError}</p>
+                    <button type="button" onClick={() => setOptionsAttempt((attempt) => attempt + 1)} className="mt-3 text-sm font-semibold text-emerald-800 underline underline-offset-4">Try again</button>
+                  </div>
+                ) : optionsLoading ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500" role="status">Loading your clients and projects…</div>
+                ) : clients.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6 text-center">
+                    <p className="text-sm font-semibold text-slate-900">Add a client before creating an invoice</p>
+                    <p className="mt-1 text-xs leading-5 text-slate-600">Invoice records are connected to a client and one of their projects.</p>
+                    <Link to="/clients" onClick={handleClose} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">Go to clients <ChevronRight className="h-4 w-4" /></Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 bg-white sm:grid-cols-2">
                   {clients.map((client) => (
                     <button
                       key={client.id}
                       type="button"
+                      aria-pressed={clientId === client.id}
                       onClick={() => {
                         setValue("clientId", client.id);
                         setValue("projectId", "");
@@ -232,7 +257,8 @@ const onSubmit = async (data) => {
                       )}
                     </button>
                   ))}
-                </div>
+                  </div>
+                )}
                 {errors.clientId && (
                   <p className="text-sm text-red-500">{errors.clientId.message}</p>
                 )}
@@ -276,12 +302,20 @@ const onSubmit = async (data) => {
                 <Label className="text-sm font-medium text-slate-700 bg-white">
                   Select Project
                 </Label>
-                {filteredProjects.length > 0 ? (
+                {optionsError ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-5" role="alert">
+                    <p className="text-sm font-medium text-amber-900">{optionsError}</p>
+                    <button type="button" onClick={() => setOptionsAttempt((attempt) => attempt + 1)} className="mt-3 text-sm font-semibold text-emerald-800 underline underline-offset-4">Try again</button>
+                  </div>
+                ) : optionsLoading ? (
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500" role="status">Loading your projects…</div>
+                ) : filteredProjects.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white">
                     {filteredProjects.map((project) => (
                       <button
                         key={project.id}
                         type="button"
+                        aria-pressed={projectId === project.id}
                         onClick={() => setValue("projectId", project.id)}
                         className={`p-4 rounded-xl border-2 text-left transition-all duration-200 bg-white ${
                           projectId === project.id
@@ -303,13 +337,10 @@ const onSubmit = async (data) => {
                     ))}
                   </div>
                 ) : (
-                  <div className="p-6 text-center border-2 border-dashed border-slate-300 rounded-xl bg-slate-50">
-                    <p className="text-sm text-slate-500">
-                      No projects found for this client
-                    </p>
-                    <p className="text-xs text-slate-400 mt-1">
-                      Create a project first
-                    </p>
+                  <div className="rounded-xl border border-dashed border-emerald-300 bg-emerald-50/60 p-6 text-center">
+                    <p className="text-sm font-semibold text-slate-900">No projects for {selectedClient?.name || 'this client'} yet</p>
+                    <p className="mt-1 text-xs text-slate-600">Create a project for this client, then come back to finish the invoice.</p>
+                    <Link to="/projects" onClick={handleClose} className="mt-4 inline-flex items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">Go to projects <ChevronRight className="h-4 w-4" /></Link>
                   </div>
                 )}
                 {errors.projectId && (
@@ -373,6 +404,9 @@ const onSubmit = async (data) => {
                   <Input
                     id="amount"
                     type="number"
+                    min="0.01"
+                    max="99999999.99"
+                    step="0.01"
                     placeholder="250000"
                     className="border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white"
                     {...register("amount")}
