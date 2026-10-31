@@ -117,14 +117,14 @@ const Settings = () => {
     try {
       await deleteAccount({ currentPassword: deletePassword, confirmation: deleteConfirmation });
       toast.success('Account deleted');
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmation('');
+      setDeletePassword('');
       window.location.href = '/';
     } catch (error) {
       toast.error(error.response?.data?.message || 'Failed to delete account');
     } finally {
       setIsSaving(false);
-      setIsDeleteDialogOpen(false);
-      setDeleteConfirmation('');
-      setDeletePassword('');
     }
   };
 

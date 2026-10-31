@@ -211,9 +211,6 @@ const Dashboard = () => {
               <h3 className="font-semibold text-slate-900">Revenue Growth</h3>
               <p className="mt-1 text-xs text-slate-400">Paid invoices by payment month · last 6 months</p>
             </div>
-            <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
-              {dashboardData.totalRevenue > 0 ? '+18.2%' : '0%'}
-            </span>
           </div>
           {revenueData.some((month) => month.revenue > 0) ? (
             <ResponsiveContainer width="100%" height={250}>
