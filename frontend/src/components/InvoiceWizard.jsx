@@ -269,7 +269,7 @@ const onSubmit = async (data) => {
                   type="button"
                   onClick={handleNext}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  disabled={!clientId}
+                  disabled={!clientId || optionsLoading || Boolean(optionsError)}
                 >
                   Next Step
                   <ChevronRight className="h-4 w-4 ml-2" />
@@ -361,7 +361,7 @@ const onSubmit = async (data) => {
                   type="button"
                   onClick={handleNext}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  disabled={!projectId}
+                  disabled={!projectId || optionsLoading || Boolean(optionsError)}
                 >
                   Next Step
                   <ChevronRight className="h-4 w-4 ml-2" />
@@ -411,6 +411,7 @@ const onSubmit = async (data) => {
                     className="border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 bg-white"
                     {...register("amount")}
                   />
+                  <p className="text-xs text-slate-500">Enter an amount up to ₦99,999,999.99.</p>
                   {errors.amount && (
                     <p className="text-sm text-red-500">{errors.amount.message}</p>
                   )}
