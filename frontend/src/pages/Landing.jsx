@@ -108,11 +108,11 @@ const Landing = () => (
             </a>
           </div>
           <div className="mt-9 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-white/50">
-            <span className="inline-flex items-center gap-1.5"><CheckCircle className="h-3.5 w-3.5 text-[#d7f36a]" /> Clients</span>
+            <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-[#d7f36a]" /> Clients</span>
             <span className="h-1 w-1 rounded-full bg-white/30" />
-            <span>Projects</span>
+            <span className="inline-flex items-center gap-1.5"><FolderOpen className="h-3.5 w-3.5 text-[#d7f36a]" /> Projects</span>
             <span className="h-1 w-1 rounded-full bg-white/30" />
-            <span>Invoices & PDFs</span>
+            <span className="inline-flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-[#d7f36a]" /> Invoices & PDFs</span>
           </div>
         </div>
 
