@@ -12,21 +12,17 @@ export default function Register() {
 const handleSubmit = async (event) => {
   event.preventDefault();
   setSubmitting(true);
-
-  console.log('📤 Sending registration data:', form); // Debug
-
-  const result = await register(form);
-  console.log('📥 Registration result:', result); // Debug
-
-  if (result.success) {
-    toast.success('Account created! 🎉');
-    navigate('/dashboard', { replace: true });
-  } else {
-    // ✅ Show the exact error message from backend
-    toast.error(result.message || 'Unable to create account');
+  try {
+    const result = await register(form);
+    if (result.success) {
+      toast.success('Account created! 🎉');
+      navigate('/dashboard', { replace: true });
+    } else {
+      toast.error(result.message || 'Unable to create account');
+    }
+  } finally {
+    setSubmitting(false);
   }
-
-  setSubmitting(false);
 };
 
   return (

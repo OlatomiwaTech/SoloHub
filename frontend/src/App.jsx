@@ -11,6 +11,7 @@ import Invoices from './pages/Invoices';
 import Settings from './pages/Settings'; // ✅ Import Settings
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PaymentResult from './pages/PaymentResult';
 
 function App() {
   return (
@@ -21,6 +22,15 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/payment/verify"
+          element={
+            <ProtectedRoute>
+              <PaymentResult />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected routes */}
         <Route

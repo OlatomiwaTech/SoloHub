@@ -1,157 +1,109 @@
+const crypto = require('crypto');
 const express = require('express');
-const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { initializeTransaction, verifyTransaction } = require('../utils/paystack');
 const prisma = require('../utils/db');
 
-/**
- * Initialize payment for an invoice
- * POST /api/payments/initialize
- */
-router.post('/initialize', protect, async (req, res) => {
+const router = express.Router();
+router.use(protect);
+
+router.post('/initialize', async (req, res) => {
   try {
     const { invoiceId } = req.body;
-    const userId = req.user.id;
+    if (typeof invoiceId !== 'string' || !invoiceId) {
+      return res.status(400).json({ success: false, message: 'Invoice ID is required' });
+    }
 
-    // Find the invoice
     const invoice = await prisma.invoice.findFirst({
-      where: {
-        id: invoiceId,
-        userId,
-      },
-      include: {
-        project: {
-          include: {
-            client: true,
-          },
-        },
-        client: true,
-      },
+      where: { id: invoiceId, userId: req.user.id },
+      include: { project: { include: { client: { select: { email: true } } } } },
     });
 
     if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found',
-      });
+      return res.status(404).json({ success: false, message: 'Invoice not found' });
+    }
+    if (['PAID', 'CANCELLED'].includes(invoice.status)) {
+      return res.status(400).json({ success: false, message: 'This invoice cannot be paid' });
     }
 
-    // Don't allow payment on already paid invoices
-    if (invoice.status === 'PAID') {
-      return res.status(400).json({
-        success: false,
-        message: 'Invoice already paid',
-      });
+    const clientEmail = invoice.project?.client?.email;
+    if (!clientEmail) {
+      return res.status(400).json({ success: false, message: 'Add an email address to this invoice client before requesting payment' });
     }
 
-    const clientEmail = invoice.project?.client?.email || invoice.client?.email || req.user.email;
-    const reference = `SOLO-${invoice.number}-${Date.now()}`;
-
+    const reference = `SH-${crypto.randomUUID()}`;
     const result = await initializeTransaction(
       clientEmail,
       invoice.amount,
       reference,
-      {
-        custom_fields: [
-          {
-            display_name: 'Invoice Number',
-            variable_name: 'invoice_number',
-            value: invoice.number,
-          },
-          {
-            display_name: 'Invoice ID',
-            variable_name: 'invoice_id',
-            value: invoice.id,
-          },
-        ],
-      }
+      { invoiceId: invoice.id, invoiceNumber: invoice.number, userId: req.user.id }
     );
 
     if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message || 'Payment initialization failed',
-      });
+      return res.status(502).json({ success: false, message: result.message });
     }
 
-    // Store the reference in the invoice
     await prisma.invoice.update({
       where: { id: invoice.id },
       data: { paystackReference: reference },
     });
 
-    res.status(200).json({
+    return res.json({
       success: true,
-      data: {
-        authorizationUrl: result.authorizationUrl,
-        reference,
-      },
+      data: { authorizationUrl: result.authorizationUrl, reference },
     });
   } catch (error) {
     console.error('Initialize payment error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to initialize payment',
-    });
+    return res.status(500).json({ success: false, message: 'Failed to initialize payment' });
   }
 });
 
-/**
- * Verify payment
- * GET /api/payments/verify/:reference
- */
-router.get('/verify/:reference', protect, async (req, res) => {
+router.get('/verify/:reference', async (req, res) => {
   try {
-    const { reference } = req.params;
-
-    const result = await verifyTransaction(reference);
-
-    if (!result.success) {
-      return res.status(400).json({
-        success: false,
-        message: result.message || 'Payment verification failed',
-      });
-    }
-
-    const paymentData = result.data;
-
-    // Find the invoice with this reference
     const invoice = await prisma.invoice.findFirst({
-      where: { paystackReference: reference },
+      where: { paystackReference: req.params.reference, userId: req.user.id },
     });
-
     if (!invoice) {
-      return res.status(404).json({
-        success: false,
-        message: 'Invoice not found for this transaction',
-      });
+      return res.status(404).json({ success: false, message: 'Payment reference not found' });
     }
 
-    // Update invoice status if payment was successful
-    if (paymentData.status === 'success') {
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: {
-          status: 'PAID',
-          paidAt: new Date(),
+    const result = await verifyTransaction(req.params.reference);
+    if (!result.success) {
+      return res.status(502).json({ success: false, message: result.message });
+    }
+
+    const payment = result.data;
+    const expectedAmount = Math.round(Number(invoice.amount) * 100);
+    if (payment.reference !== invoice.paystackReference) {
+      return res.status(400).json({ success: false, message: 'Payment reference does not match' });
+    }
+
+    const paid = payment.status === 'success'
+      && payment.currency === 'NGN'
+      && Number(payment.amount) === expectedAmount;
+
+    if (paid && invoice.status !== 'PAID') {
+      await prisma.invoice.updateMany({
+        where: {
+          id: invoice.id,
+          userId: req.user.id,
+          paystackReference: payment.reference,
+          status: { not: 'PAID' },
         },
+        data: { status: 'PAID', paidAt: new Date() },
       });
     }
 
-    res.status(200).json({
+    const updatedInvoice = await prisma.invoice.findFirst({
+      where: { id: invoice.id, userId: req.user.id },
+    });
+    return res.json({
       success: true,
-      data: {
-        status: paymentData.status,
-        amount: paymentData.amount / 100,
-        invoice: invoice,
-      },
+      data: { status: paid ? 'success' : payment.status, invoice: updatedInvoice },
     });
   } catch (error) {
     console.error('Verify payment error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to verify payment',
-    });
+    return res.status(500).json({ success: false, message: 'Failed to verify payment' });
   }
 });
 

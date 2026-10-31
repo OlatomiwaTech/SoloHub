@@ -1,19 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Database setup
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
-const prisma = new PrismaClient({ adapter });
 
 // CORS configuration
 const allowedOrigins = [
@@ -37,6 +29,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Webhooks must receive the unparsed request bytes for signature verification.
+app.use('/api/webhooks', require('./routes/webhooks.routes'));
 app.use(express.json());
 
 // Routes
@@ -44,6 +38,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/clients', require('./routes/client.routes'));
 app.use('/api/projects', require('./routes/project.routes'));
 app.use('/api/invoices', require('./routes/invoice.routes'));
+app.use('/api/payments', require('./routes/paystack.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {

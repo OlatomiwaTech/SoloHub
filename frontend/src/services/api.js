@@ -75,5 +75,10 @@ export const invoicesAPI = {
   updateStatus: (id, status) => api.patch(`/invoices/${id}/status`, { status }),
 };
 
+export const paymentsAPI = {
+  initialize: (invoiceId) => api.post('/payments/initialize', { invoiceId }),
+  verify: (reference) => api.get(`/payments/verify/${encodeURIComponent(reference)}`),
+};
+
 export default api;
 

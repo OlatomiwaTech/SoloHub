@@ -1,74 +1,35 @@
 import { useState } from 'react';
-import PaystackPop from '@paystack/inline-js';
 import { Button } from './ui/button';
 import { CreditCard, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { invoicesAPI } from '../services/api';
+import { paymentsAPI } from '../services/api';
 
-const PaystackPayment = ({ invoice, onPaymentSuccess, onClose, compact = false }) => {
+const PaystackPayment = ({ invoice, compact = false }) => {
   const [isInitializing, setIsInitializing] = useState(false);
 
-  // Get client email
-  const clientEmail = invoice?.project?.client?.email || invoice?.client?.email || 'client@example.com';
-
-  const handleSuccess = async () => {
+  const handlePayment = async () => {
+    setIsInitializing(true);
     try {
-      // Update invoice status to PAID
-      await invoicesAPI.updateStatus(invoice.id, 'PAID');
-      toast.success('Payment successful! 🎉 Invoice marked as PAID');
-      onPaymentSuccess?.();
-      onClose?.();
+      const response = await paymentsAPI.initialize(invoice.id);
+      const checkoutUrl = response.data?.data?.authorizationUrl;
+      if (!checkoutUrl) throw new Error('Paystack did not return a checkout link');
+      window.location.assign(checkoutUrl);
     } catch (error) {
-      console.error('Payment success handler error:', error);
-      toast.error('Payment successful but failed to update invoice. Please contact support.');
-    } finally {
+      toast.error(error.response?.data?.message || error.message || 'Unable to start payment');
       setIsInitializing(false);
     }
   };
 
-  const handleClose = () => {
-    setIsInitializing(false);
-    toast.info('Payment cancelled');
-    onClose?.();
-  };
-
-  const handlePayment = () => {
-    const amount = Number(invoice?.amount);
-    if (!amount || !clientEmail) {
-      toast.error('Invalid invoice amount');
-      return;
-    }
-
-    setIsInitializing(true);
-    const paystack = new PaystackPop();
-    paystack.newTransaction({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
-      reference: `SOLO-${invoice?.number || Date.now()}-${Date.now()}`,
-      email: clientEmail,
-      amount: Math.round(amount * 100),
-      currency: 'NGN',
-      metadata: {
-        invoice_number: invoice?.number || '',
-        invoice_id: invoice?.id || '',
-      },
-      onLoad: () => setIsInitializing(false),
-      onSuccess: handleSuccess,
-      onCancel: handleClose,
-      onError: (error) => {
-        setIsInitializing(false);
-        toast.error(error?.message || 'Unable to initialize Paystack payment');
-      },
-    });
-  };
-
   return (
     <Button
+      type="button"
       onClick={handlePayment}
       className={compact
         ? 'h-8 w-8 bg-emerald-600 p-0 text-white hover:bg-emerald-700'
         : 'w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 hover:shadow-emerald-300 transition-all'}
       disabled={isInitializing}
       title="Pay with Paystack"
+      aria-label={compact ? `Pay invoice ${invoice?.number} with Paystack` : undefined}
     >
       {isInitializing ? (
         <Loader2 className="h-4 w-4 animate-spin" />
