@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { 
   FileText, 
@@ -48,12 +49,17 @@ import PaystackPayment from '../components/PaystackPayment';
 import { getInvoiceDisplayStatus } from '../lib/invoiceStatus';
 
 const Invoices = () => {
+  const [searchParams] = useSearchParams();
+  const requestedStatus = searchParams.get('status');
+  const initialStatus = ['DRAFT', 'SENT', 'PAID', 'OVERDUE', 'CANCELLED'].includes(requestedStatus)
+    ? requestedStatus
+    : 'ALL';
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [duplicateSource, setDuplicateSource] = useState(null);
   const [invoices, setInvoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('ALL');
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [invoiceToEdit, setInvoiceToEdit] = useState(null);
@@ -185,6 +191,7 @@ const Invoices = () => {
     if (status === 'OVERDUE') summary.overdue += amount;
     return summary;
   }, { total: 0, paid: 0, pending: 0, overdue: 0 });
+  const selectedInvoiceStatus = selectedInvoice ? getInvoiceDisplayStatus(selectedInvoice) : 'DRAFT';
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-NG', {
@@ -214,7 +221,7 @@ const Invoices = () => {
         invoice.project?.client?.name,
         invoice.project?.name,
         Number(invoice.amount).toFixed(2),
-        invoice.status,
+        getInvoiceDisplayStatus(invoice),
         formatDate(invoice.issueDate),
         formatDate(invoice.dueDate),
       ]),
@@ -511,9 +518,9 @@ const Invoices = () => {
                 <div>
                   <p className="text-sm text-slate-500">Status</p>
                   <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-sm font-medium ${
-                    getStatusConfig(selectedInvoice.status).color
+                    getStatusConfig(selectedInvoiceStatus).color
                   }`}>
-                    {selectedInvoice.status}
+                    {selectedInvoiceStatus}
                   </span>
                 </div>
               </div>
@@ -526,7 +533,7 @@ const Invoices = () => {
                 <div>
                   <p className="text-sm text-slate-500">Due Date</p>
                   <p className={`text-slate-900 ${
-                    selectedInvoice.status === 'OVERDUE' ? 'text-red-600 font-medium' : ''
+                    selectedInvoiceStatus === 'OVERDUE' ? 'text-red-600 font-medium' : ''
                   }`}>
                     {formatDate(selectedInvoice.dueDate)}
                   </p>
@@ -548,7 +555,7 @@ const Invoices = () => {
               )}
 
               <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 pt-4">
-                {selectedInvoice && ['SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                {['SENT', 'OVERDUE'].includes(selectedInvoiceStatus) && (
                   <div className="min-w-0 flex-1 basis-full sm:basis-auto">
                     <PaystackPayment
                       invoice={selectedInvoice}
@@ -562,7 +569,7 @@ const Invoices = () => {
                   Close
                 </Button>
 
-                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoiceStatus) && (
                   <Button variant="outline" onClick={() => handleEdit(selectedInvoice)}>
                     <Pencil className="mr-2 h-4 w-4" /> Edit
                   </Button>
@@ -573,17 +580,17 @@ const Invoices = () => {
                 </Button>
 
                 <InvoicePDFDownloadButton invoice={selectedInvoice} fullWidth />
-                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoiceStatus) && (
                   <InvoiceEmailDraftButton
                     invoice={selectedInvoice}
                     fullWidth
-                    mode={['SENT', 'OVERDUE'].includes(selectedInvoice.status) ? 'reminder' : 'invoice'}
+                    mode={['SENT', 'OVERDUE'].includes(selectedInvoiceStatus) ? 'reminder' : 'invoice'}
                   />
                 )}
               </div>
-              {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+              {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoiceStatus) && (
                 <p className="text-right text-xs text-slate-500">
-                  {['SENT', 'OVERDUE'].includes(selectedInvoice.status)
+                  {['SENT', 'OVERDUE'].includes(selectedInvoiceStatus)
                     ? 'The reminder opens in your mail app. Review and send it there.'
                     : 'The email opens in your mail app. Attach the invoice PDF before sending.'}
                 </p>

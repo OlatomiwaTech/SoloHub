@@ -11,6 +11,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import InvoiceWizard from "@/components/InvoiceWizard";
 import InvoiceEmailDraftButton from "@/components/InvoiceEmailDraftButton";
@@ -37,6 +40,7 @@ const Dashboard = () => {
   const [recentInvoices, setRecentInvoices] = useState([]);
   const [attentionInvoices, setAttentionInvoices] = useState([]);
   const [revenueData, setRevenueData] = useState([]);
+  const [invoiceStatusData, setInvoiceStatusData] = useState([]);
   const [chartMonths, setChartMonths] = useState(6);
   const [recentStatusFilter, setRecentStatusFilter] = useState('ALL');
 
@@ -60,6 +64,34 @@ const Dashboard = () => {
         const projects = projectsRes.data.data || [];
         const invoices = invoicesRes.data.data || [];
         const totals = invoicesRes.data.totals || {};
+
+        const statusColors = {
+          PAID: '#059669',
+          SENT: '#3b82f6',
+          OVERDUE: '#dc2626',
+          DRAFT: '#94a3b8',
+          CANCELLED: '#cbd5e1',
+        };
+        const statusLabels = {
+          PAID: 'Paid',
+          SENT: 'Sent',
+          OVERDUE: 'Overdue',
+          DRAFT: 'Draft',
+          CANCELLED: 'Cancelled',
+        };
+        const statusCounts = invoices.reduce((counts, invoice) => {
+          const status = getInvoiceDisplayStatus(invoice);
+          counts[status] = (counts[status] || 0) + 1;
+          return counts;
+        }, {});
+        const invoiceStatuses = ['PAID', 'SENT', 'OVERDUE', 'DRAFT', 'CANCELLED']
+          .filter((status) => statusCounts[status])
+          .map((status) => ({
+            status,
+            label: statusLabels[status],
+            count: statusCounts[status],
+            color: statusColors[status],
+          }));
         
         // Calculate active projects
         const activeProjects = projects.filter(p => p.status === 'ACTIVE').length;
@@ -133,6 +165,7 @@ const Dashboard = () => {
         setRecentInvoices(recent);
         setAttentionInvoices(needsFollowUp);
         setRevenueData(revenueChartData);
+        setInvoiceStatusData(invoiceStatuses);
         
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -394,6 +427,55 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+
+        <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6" aria-labelledby="invoice-status-chart-title">
+          <div className="mb-3">
+            <h2 id="invoice-status-chart-title" className="font-semibold text-slate-900">Invoice status</h2>
+            <p className="mt-1 text-xs text-slate-500">Your invoices by current status. Select a status to review it.</p>
+          </div>
+          {invoiceStatusData.length ? (
+            <div className="grid items-center gap-2 sm:grid-cols-2">
+              <ResponsiveContainer width="100%" height={230}>
+                <PieChart>
+                  <Pie
+                    data={invoiceStatusData}
+                    dataKey="count"
+                    nameKey="label"
+                    innerRadius={55}
+                    outerRadius={88}
+                    paddingAngle={3}
+                    stroke="white"
+                    strokeWidth={3}
+                    onClick={(entry) => navigate(`/invoices?status=${entry.status}`)}
+                  >
+                    {invoiceStatusData.map((entry) => <Cell key={entry.status} fill={entry.color} />)}
+                  </Pie>
+                  <Tooltip formatter={(value, name) => [`${value} ${Number(value) === 1 ? 'invoice' : 'invoices'}`, name]} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-1" role="group" aria-label="Open invoices by status">
+                {invoiceStatusData.map((entry) => (
+                  <button
+                    key={entry.status}
+                    type="button"
+                    onClick={() => navigate(`/invoices?status=${entry.status}`)}
+                    className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-slate-100 px-3 py-2 text-left transition hover:border-emerald-200 hover:bg-emerald-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-700"
+                  >
+                    <span className="inline-flex items-center gap-2 text-sm text-slate-700">
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: entry.color }} aria-hidden="true" />
+                      {entry.label}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-900">{entry.count}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="grid min-h-52 place-items-center rounded-lg bg-slate-50 text-center text-sm text-slate-500">
+              Invoice statuses will appear here after you create your first invoice.
+            </div>
+          )}
+        </section>
 
         {/* Recent Invoices */}
         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
