@@ -116,7 +116,7 @@ const Landing = () => (
           </div>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[620px] lg:ml-auto">
+        <div className="relative mx-auto w-full max-w-[620px] animate-float motion-reduce:animate-none lg:ml-auto">
           <div className="absolute -inset-10 rounded-[40px] bg-[#a3bd69]/10 blur-3xl" />
           <div className="relative rotate-[1deg] rounded-[26px] border border-white/15 bg-[#e9e9df] p-2.5 shadow-[0_35px_100px_rgba(0,0,0,0.42)] sm:p-3.5">
             <div className="overflow-hidden rounded-[18px] bg-[#f8f8f4] text-[#1c2a23]">
