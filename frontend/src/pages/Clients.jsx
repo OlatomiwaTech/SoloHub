@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Plus, Pencil, Trash2, Search, Users } from 'lucide-react';
+import { Plus, Pencil, Trash2, Search, Users, X } from 'lucide-react';
 import { clientsAPI } from '../services/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -151,9 +151,10 @@ const Clients = () => {
   };
 
   // Filter clients by search term
+  const normalizedSearch = searchTerm.trim().toLowerCase();
   const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    [client.name, client.email, client.phone]
+      .some((value) => value?.toLowerCase().includes(normalizedSearch))
   );
 
   return (
@@ -180,12 +181,31 @@ const Clients = () => {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
         <Input
-          placeholder="Search clients by name or email..."
+          placeholder="Search clients by name, email, or phone..."
+          aria-label="Search clients by name, email, or phone"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
+          className="pl-10 pr-10 border-slate-200 focus:border-emerald-500 focus:ring-emerald-500"
         />
+        {searchTerm && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Clear client search"
+            onClick={() => setSearchTerm('')}
+            className="absolute right-1 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
       </div>
+
+      {!loading && clients.length > 0 && (
+        <p className="-mt-4 text-sm text-slate-500" aria-live="polite">
+          Showing {filteredClients.length} of {clients.length} {clients.length === 1 ? 'client' : 'clients'}
+        </p>
+      )}
 
       {/* Clients Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -198,16 +218,26 @@ const Clients = () => {
           <div className="p-8 text-center">
             <Users className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <p className="text-slate-500">
-              {searchTerm ? 'No clients match your search' : 'No clients yet'}
+              {normalizedSearch ? 'No clients match your search' : 'No clients yet'}
             </p>
-            <Button
-              onClick={() => handleOpenModal()}
-              variant="outline"
-              className="mt-3"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add your first client
-            </Button>
+            {normalizedSearch ? (
+              <Button
+                onClick={() => setSearchTerm('')}
+                variant="outline"
+                className="mt-3"
+              >
+                Clear search
+              </Button>
+            ) : (
+              <Button
+                onClick={() => handleOpenModal()}
+                variant="outline"
+                className="mt-3"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add your first client
+              </Button>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
