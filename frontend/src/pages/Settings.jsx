@@ -47,7 +47,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateProfile, changePassword, deleteAccount } = useAuth();
   const [profileForm, setProfileForm] = useState({
     fullName: user?.fullName || '',
     email: user?.email || '',
@@ -59,6 +59,8 @@ const Settings = () => {
     confirmPassword: '',
   });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   // Handle profile update
@@ -67,13 +69,10 @@ const Settings = () => {
     setIsSaving(true);
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Profile updated successfully! 🎉');
-      // Update user in context
-      // In production: await authAPI.updateProfile(profileForm)
-    } catch {
-      toast.error('Failed to update profile');
+      await updateProfile(profileForm);
+      toast.success('Profile updated successfully');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update profile');
     } finally {
       setIsSaving(false);
     }
@@ -88,23 +87,25 @@ const Settings = () => {
       return;
     }
 
-    if (passwordForm.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters');
+    if (passwordForm.newPassword.length < 8) {
+      toast.error('Password must be at least 8 characters');
       return;
     }
 
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success('Password updated successfully! 🔒');
+      await changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
+      toast.success('Password updated successfully');
       setPasswordForm({
         currentPassword: '',
         newPassword: '',
         confirmPassword: '',
       });
-    } catch {
-      toast.error('Failed to update password');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update password');
     } finally {
       setIsSaving(false);
     }
@@ -114,17 +115,28 @@ const Settings = () => {
   const handleDeleteAccount = async () => {
     setIsSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.success('Account deleted. We\'re sorry to see you go! 💔');
-      logout();
-      // Redirect to landing page
+      await deleteAccount({ currentPassword: deletePassword, confirmation: deleteConfirmation });
+      toast.success('Account deleted');
       window.location.href = '/';
-    } catch {
-      toast.error('Failed to delete account');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to delete account');
     } finally {
       setIsSaving(false);
       setIsDeleteDialogOpen(false);
+      setDeleteConfirmation('');
+      setDeletePassword('');
+    }
+  };
+
+  const handlePreferencesSave = async () => {
+    setIsSaving(true);
+    try {
+      await updateProfile({ currency: profileForm.currency });
+      toast.success('Currency preference saved');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to save preferences');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -178,7 +190,7 @@ const Settings = () => {
                     <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center text-2xl font-bold text-emerald-600">
                       {profileForm.fullName?.charAt(0) || 'U'}
                     </div>
-                    <button className="absolute bottom-0 right-0 p-1 bg-emerald-600 rounded-full text-white hover:bg-emerald-700 transition">
+                    <button type="button" disabled title="Profile photos are not available yet" className="absolute bottom-0 right-0 p-1 bg-slate-400 rounded-full text-white">
                       <Camera className="h-4 w-4" />
                     </button>
                   </div>
@@ -243,7 +255,13 @@ const Settings = () => {
               </p>
             </CardHeader>
             <CardContent>
-              <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <Dialog open={isDeleteDialogOpen} onOpenChange={(open) => {
+                setIsDeleteDialogOpen(open);
+                if (!open) {
+                  setDeleteConfirmation('');
+                  setDeletePassword('');
+                }
+              }}>
                 <DialogTrigger asChild>
                   <Button variant="destructive">
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -259,15 +277,25 @@ const Settings = () => {
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
-                    <p className="text-sm text-slate-600">
-                      Are you sure you want to delete your account? Type <strong className="text-red-600">DELETE</strong> to confirm.
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-slate-600">
+                        This permanently removes your account and associated records. Type <strong className="text-red-600">DELETE</strong> and enter your password to confirm.
+                      </p>
+                      <div className="space-y-2">
+                        <Label htmlFor="deleteConfirmation">Confirmation</Label>
+                        <Input id="deleteConfirmation" value={deleteConfirmation} onChange={(event) => setDeleteConfirmation(event.target.value)} autoComplete="off" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="deletePassword">Current password</Label>
+                        <Input id="deletePassword" type="password" value={deletePassword} onChange={(event) => setDeletePassword(event.target.value)} autoComplete="current-password" />
+                      </div>
+                    </div>
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button variant="destructive" onClick={handleDeleteAccount} disabled={isSaving}>
+                    <Button variant="destructive" onClick={handleDeleteAccount} disabled={isSaving || deleteConfirmation !== 'DELETE' || !deletePassword}>
                       {isSaving ? 'Deleting...' : 'Delete Account'}
                     </Button>
                   </DialogFooter>
@@ -365,7 +393,7 @@ const Settings = () => {
                   <p className="font-medium text-slate-900">2FA Status</p>
                   <p className="text-sm text-slate-500">Not enabled</p>
                 </div>
-                <Button variant="outline" className="border-slate-300">
+                <Button variant="outline" className="border-slate-300" disabled>
                   Enable 2FA
                 </Button>
               </div>
@@ -407,7 +435,7 @@ const Settings = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="timezone">Timezone</Label>
-                <Select>
+                <Select disabled>
                   <SelectTrigger className="bg-white border-slate-200">
                     <SelectValue placeholder="Select timezone" />
                   </SelectTrigger>
@@ -425,15 +453,15 @@ const Settings = () => {
                   <Bell className="h-5 w-5 text-slate-500" />
                   <div>
                     <p className="font-medium text-slate-900">Email Notifications</p>
-                    <p className="text-sm text-slate-500">Receive invoice and payment updates</p>
+                    <p className="text-sm text-slate-500">Notification preferences are not available yet</p>
                   </div>
                 </div>
-                <Button variant="outline" className="border-slate-300">
+                <Button variant="outline" className="border-slate-300" disabled>
                   Manage
                 </Button>
               </div>
 
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Button onClick={handlePreferencesSave} className="bg-emerald-600 hover:bg-emerald-700 text-white" disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
                 Save Preferences
               </Button>
@@ -458,21 +486,15 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-semibold text-slate-900">Free Plan</p>
-                    <p className="text-sm text-slate-500">₦0 / month</p>
-                    <ul className="mt-2 space-y-1 text-sm text-slate-600">
-                      <li>✓ Up to 5 clients</li>
-                      <li>✓ Up to 10 projects</li>
-                      <li>✓ Unlimited invoices</li>
-                      <li>✓ Basic analytics</li>
-                    </ul>
+                    <p className="text-sm text-slate-500">Subscription billing is not available yet.</p>
                   </div>
                   <div className="text-center">
                     <span className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">
                       <CheckCircle className="h-3 w-3" />
                       Current Plan
                     </span>
-                    <Button variant="outline" className="mt-3 border-slate-300 block w-full">
-                      Upgrade
+                    <Button variant="outline" className="mt-3 border-slate-300 block w-full" disabled>
+                      Plans coming soon
                     </Button>
                   </div>
                 </div>
@@ -480,7 +502,7 @@ const Settings = () => {
 
               <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
                 <p className="text-sm text-slate-500">No payment method added yet.</p>
-                <Button variant="outline" className="mt-2 border-slate-300">
+                <Button variant="outline" className="mt-2 border-slate-300" disabled>
                   <CreditCard className="h-4 w-4 mr-2" />
                   Add Payment Method
                 </Button>
