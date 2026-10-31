@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, Check, CircleAlert, DollarSign, Clock, Briefcase, Users, Plus, RefreshCw } from "lucide-react";
+import { ArrowRight, Check, CircleAlert, DollarSign, Clock, Briefcase, FileText, Users, Plus, RefreshCw } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -17,6 +17,7 @@ import { clientsAPI, projectsAPI, invoicesAPI } from '../services/api';
 
 const Dashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   
   // ✅ State for dashboard data
@@ -36,10 +37,12 @@ const Dashboard = () => {
 
   // ✅ Fetch dashboard data on mount
   useEffect(() => {
+    let cancelled = false;
+
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        setDashboardError('');
+        if (!cancelled) setDashboardError('');
         
         // Fetch all data in parallel
         const [clientsRes, projectsRes, invoicesRes] = await Promise.all([
@@ -87,6 +90,7 @@ const Dashboard = () => {
           };
         });
         
+        if (cancelled) return;
         setDashboardData({
           totalRevenue: totals.paid || 0,
           pendingInvoices: (totals.pending || 0) + (totals.overdue || 0),
@@ -101,13 +105,14 @@ const Dashboard = () => {
         
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
-        setDashboardError('We could not load your workspace data. Check your connection and try again.');
+        if (!cancelled) setDashboardError('We could not load your workspace data. Check your connection and try again.');
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
     
     fetchDashboardData();
+    return () => { cancelled = true; };
   }, [loadAttempt]);
 
   // ✅ Build stats array from real data
@@ -149,9 +154,15 @@ const Dashboard = () => {
   const onboardingSteps = [
     { label: 'Add your first client', complete: dashboardData.totalClients > 0, to: '/clients' },
     { label: 'Create a project', complete: dashboardData.totalProjects > 0, to: '/projects' },
-    { label: 'Create an invoice', complete: dashboardData.totalInvoices > 0, onClick: () => setIsWizardOpen(true) },
+    { label: 'Create an invoice', complete: dashboardData.totalInvoices > 0, onClick: handleCreateInvoice },
   ];
   const completedSteps = onboardingSteps.filter((step) => step.complete).length;
+
+  function handleCreateInvoice() {
+    if (dashboardData.totalClients === 0) navigate('/clients');
+    else if (dashboardData.totalProjects === 0) navigate('/projects');
+    else setIsWizardOpen(true);
+  }
 
   // ✅ Loading state
   if (loading) {
@@ -336,7 +347,7 @@ const Dashboard = () => {
               <FileText className="mx-auto h-8 w-8 text-slate-300" aria-hidden="true" />
               <p className="mt-3 text-sm font-medium text-slate-700">No invoices yet</p>
               <p className="mt-1 text-xs text-slate-500">Your latest billing activity will appear here.</p>
-              <button type="button" onClick={() => setIsWizardOpen(true)} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 transition hover:gap-2.5 hover:text-emerald-800">Create an invoice <ArrowRight className="h-4 w-4" /></button>
+              <button type="button" onClick={handleCreateInvoice} className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-700 transition hover:gap-2.5 hover:text-emerald-800">Create an invoice <ArrowRight className="h-4 w-4" /></button>
             </div>
           )}
         </div>
