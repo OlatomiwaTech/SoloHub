@@ -333,7 +333,12 @@ const Invoices = () => {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <InvoiceEmailDraftButton invoice={invoice} />
+                          {['DRAFT', 'SENT', 'OVERDUE'].includes(invoice.status) && (
+                            <InvoiceEmailDraftButton
+                              invoice={invoice}
+                              mode={['SENT', 'OVERDUE'].includes(invoice.status) ? 'reminder' : 'invoice'}
+                            />
+                          )}
                           <InvoicePDFDownloadButton invoice={invoice} />
 
                           {/* View Button */}
@@ -487,9 +492,21 @@ const Invoices = () => {
                 </Button>
 
                 <InvoicePDFDownloadButton invoice={selectedInvoice} fullWidth />
-                <InvoiceEmailDraftButton invoice={selectedInvoice} fullWidth />
+                {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                  <InvoiceEmailDraftButton
+                    invoice={selectedInvoice}
+                    fullWidth
+                    mode={['SENT', 'OVERDUE'].includes(selectedInvoice.status) ? 'reminder' : 'invoice'}
+                  />
+                )}
               </div>
-              <p className="text-right text-xs text-slate-500">The email opens in your mail app. Attach the invoice PDF before sending.</p>
+              {['DRAFT', 'SENT', 'OVERDUE'].includes(selectedInvoice.status) && (
+                <p className="text-right text-xs text-slate-500">
+                  {['SENT', 'OVERDUE'].includes(selectedInvoice.status)
+                    ? 'The reminder opens in your mail app. Review and send it there.'
+                    : 'The email opens in your mail app. Attach the invoice PDF before sending.'}
+                </p>
+              )}
             </div>
           )}
         </DialogContent>

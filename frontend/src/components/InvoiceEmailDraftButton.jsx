@@ -7,9 +7,10 @@ const formatAmount = (amount) => new Intl.NumberFormat('en-NG', {
   maximumFractionDigits: 2,
 }).format(Number(amount) || 0);
 
-const InvoiceEmailDraftButton = ({ invoice, fullWidth = false }) => {
+const InvoiceEmailDraftButton = ({ invoice, fullWidth = false, mode = 'invoice' }) => {
   const client = invoice.project?.client;
   const email = client?.email?.trim();
+  const isReminder = mode === 'reminder';
 
   if (!email) {
     return (
@@ -32,14 +33,23 @@ const InvoiceEmailDraftButton = ({ invoice, fullWidth = false }) => {
   const dueDate = invoice.dueDate
     ? new Date(invoice.dueDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'long', year: 'numeric' })
     : 'Not specified';
-  const subject = `Invoice ${invoice.number} — ${projectName}`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const dueDateValue = new Date(invoice.dueDate);
+  dueDateValue.setHours(0, 0, 0, 0);
+  const overdue = invoice.status === 'OVERDUE' || dueDateValue < today;
+  const subject = isReminder
+    ? `Payment reminder — invoice ${invoice.number}`
+    : `Invoice ${invoice.number} — ${projectName}`;
   const body = [
     `Hello ${client.name || 'there'},`,
     '',
-    `Here are the details for invoice ${invoice.number}:`,
+    isReminder
+      ? `This is a friendly reminder about invoice ${invoice.number}, ${overdue ? 'which is overdue' : `due on ${dueDate}`}.`
+      : `Here are the details for invoice ${invoice.number}:`,
     '',
     `Project: ${projectName}`,
-    `Amount: ${formatAmount(invoice.amount)}`,
+    `${isReminder ? 'Outstanding amount' : 'Amount'}: ${formatAmount(invoice.amount)}`,
     `Due date: ${dueDate}`,
     ...(invoice.description ? [`Description: ${invoice.description}`] : []),
     '',
@@ -56,11 +66,11 @@ const InvoiceEmailDraftButton = ({ invoice, fullWidth = false }) => {
     >
       <a
         href={href}
-        title="Opens an email draft. Attach the invoice PDF before sending."
-        aria-label={`Draft invoice ${invoice.number} email to ${client.name || email}`}
+        title={isReminder ? 'Opens a payment reminder email draft' : 'Opens an email draft. Attach the invoice PDF before sending.'}
+        aria-label={`${isReminder ? 'Draft payment reminder' : 'Draft invoice email'} for invoice ${invoice.number} to ${client.name || email}`}
       >
         <Mail className={`h-4 w-4 ${fullWidth ? '' : 'text-emerald-600'}`} aria-hidden="true" />
-        {fullWidth && <span className="ml-2">Email draft</span>}
+        {fullWidth && <span className="ml-2">{isReminder ? 'Reminder draft' : 'Email draft'}</span>}
       </a>
     </Button>
   );

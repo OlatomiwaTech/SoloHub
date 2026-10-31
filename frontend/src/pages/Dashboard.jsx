@@ -13,6 +13,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import InvoiceWizard from "@/components/InvoiceWizard";
+import InvoiceEmailDraftButton from "@/components/InvoiceEmailDraftButton";
 import { clientsAPI, projectsAPI, invoicesAPI } from '../services/api';
 
 const Dashboard = () => {
@@ -87,6 +88,7 @@ const Dashboard = () => {
               id: invoice.id,
               number: invoice.number,
               client: invoice.project?.client?.name || 'Client unavailable',
+              project: invoice.project,
               amount: Number(invoice.amount) || 0,
               dueDate: invoice.dueDate,
               overdue: invoice.status === 'OVERDUE' || dueDate < today,
@@ -258,7 +260,10 @@ const Dashboard = () => {
                       {invoice.overdue ? 'Overdue' : 'Due'} · {new Date(invoice.dueDate).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
                   </div>
-                  <span className="shrink-0 text-sm font-semibold text-slate-900">₦{invoice.amount.toLocaleString('en-NG')}</span>
+                  <div className="flex shrink-0 items-center justify-between gap-3 sm:justify-end">
+                    <span className="text-sm font-semibold text-slate-900">₦{invoice.amount.toLocaleString('en-NG')}</span>
+                    <InvoiceEmailDraftButton invoice={invoice} mode="reminder" />
+                  </div>
                 </li>
               ))}
             </ul>
