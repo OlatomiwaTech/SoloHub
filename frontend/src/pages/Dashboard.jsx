@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, CalendarDays, DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
+import { CalendarDays, DollarSign, Clock, Briefcase, Users, Plus } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -59,26 +59,31 @@ const Dashboard = () => {
             month: 'short',
             day: 'numeric',
           }),
-          amount: `₦${inv.amount.toLocaleString()}`,
+          amount: `₦${Number(inv.amount).toLocaleString('en-NG')}`,
           status: inv.status,
         }));
         
-        // Generate revenue data from invoices
-        const revenueMap = {};
-        invoices.forEach(inv => {
-          const date = new Date(inv.createdAt);
-          const monthKey = date.toLocaleDateString('en-NG', { month: 'short' });
-          if (!revenueMap[monthKey]) revenueMap[monthKey] = 0;
-          revenueMap[monthKey] += inv.amount;
+        // Revenue means money collected, grouped by payment date.
+        const revenueMap = new Map();
+        invoices.filter((invoice) => invoice.status === 'PAID' && invoice.paidAt).forEach((invoice) => {
+          const paidDate = new Date(invoice.paidAt);
+          const key = `${paidDate.getFullYear()}-${String(paidDate.getMonth() + 1).padStart(2, '0')}`;
+          revenueMap.set(key, (revenueMap.get(key) || 0) + Number(invoice.amount));
+        });
+
+        const now = new Date();
+        const revenueChartData = Array.from({ length: 6 }, (_, index) => {
+          const date = new Date(now.getFullYear(), now.getMonth() - 5 + index, 1);
+          const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+          return {
+            month: date.toLocaleDateString('en-NG', { month: 'short', year: '2-digit' }),
+            revenue: revenueMap.get(key) || 0,
+          };
         });
         
-        const revenueChartData = Object.entries(revenueMap)
-          .slice(-6)
-          .map(([month, revenue]) => ({ month, revenue }));
-        
         setDashboardData({
-          totalRevenue: totals.total || 0,
-          pendingInvoices: totals.pending || 0,
+          totalRevenue: totals.paid || 0,
+          pendingInvoices: (totals.pending || 0) + (totals.overdue || 0),
           activeProjects: activeProjects,
           totalClients: clients.length,
         });
@@ -96,14 +101,7 @@ const Dashboard = () => {
           totalClients: 0,
         });
         setRecentInvoices([]);
-        setRevenueData([
-          { month: "Mar", revenue: 0 },
-          { month: "Apr", revenue: 0 },
-          { month: "May", revenue: 0 },
-          { month: "Jun", revenue: 0 },
-          { month: "Jul", revenue: 0 },
-          { month: "Aug", revenue: 0 },
-        ]);
+        setRevenueData([]);
       } finally {
         setLoading(false);
       }
@@ -115,17 +113,17 @@ const Dashboard = () => {
   // ✅ Build stats array from real data
   const stats = [
     {
-      title: "Total Revenue",
+      title: "Revenue Collected",
       value: `₦${dashboardData.totalRevenue.toLocaleString()}`,
-      change: "+18.2%",
+      description: "From paid invoices",
       icon: DollarSign,
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-600",
     },
     {
-      title: "Pending Invoices",
+      title: "Unpaid Invoices",
       value: `₦${dashboardData.pendingInvoices.toLocaleString()}`,
-      change: "+12.5%",
+      description: "Draft, sent, and overdue",
       icon: Clock,
       iconBg: "bg-amber-100",
       iconColor: "text-amber-600",
@@ -133,7 +131,7 @@ const Dashboard = () => {
     {
       title: "Active Projects",
       value: dashboardData.activeProjects.toString(),
-      change: "+2",
+      description: "Currently active",
       icon: Briefcase,
       iconBg: "bg-blue-100",
       iconColor: "text-blue-600",
@@ -141,7 +139,7 @@ const Dashboard = () => {
     {
       title: "Total Clients",
       value: dashboardData.totalClients.toString(),
-      change: "+20%",
+      description: "In your workspace",
       icon: Users,
       iconBg: "bg-purple-100",
       iconColor: "text-purple-600",
@@ -200,13 +198,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-xl font-bold text-slate-900">{stat.value}</div>
-                <div className="flex items-center pt-1">
-                  <span className="text-emerald-600 text-xs font-medium flex items-center">
-                    <ArrowUp className="h-3 w-3 mr-1" />
-                    {stat.change}
-                  </span>
-                  <span className="text-slate-400 text-xs ml-2">from last month</span>
-                </div>
+                <p className="pt-1 text-xs text-slate-400">{stat.description}</p>
               </CardContent>
             </Card>
           ))}
@@ -217,13 +209,13 @@ const Dashboard = () => {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h3 className="font-semibold text-slate-900">Revenue Growth</h3>
-              <p className="mt-1 text-xs text-slate-400">Last 6 months</p>
+              <p className="mt-1 text-xs text-slate-400">Paid invoices by payment month · last 6 months</p>
             </div>
             <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
               {dashboardData.totalRevenue > 0 ? '+18.2%' : '0%'}
             </span>
           </div>
-          {revenueData.length > 0 ? (
+          {revenueData.some((month) => month.revenue > 0) ? (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={revenueData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
