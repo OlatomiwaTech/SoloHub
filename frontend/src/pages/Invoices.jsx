@@ -62,8 +62,7 @@ const Invoices = () => {
 
     const loadInvoices = async () => {
       try {
-        const params = statusFilter !== 'ALL' ? { status: statusFilter } : {};
-        const response = await invoicesAPI.getAll(params);
+        const response = await invoicesAPI.getAll();
         if (!cancelled) {
           setInvoices(response.data.data || []);
           setTotals(response.data.totals || {
@@ -88,13 +87,12 @@ const Invoices = () => {
     return () => {
       cancelled = true;
     };
-  }, [statusFilter]);
+  }, []);
 
   const fetchInvoices = async () => {
     try {
       setLoading(true);
-      const params = statusFilter !== 'ALL' ? { status: statusFilter } : {};
-      const response = await invoicesAPI.getAll(params);
+      const response = await invoicesAPI.getAll();
       setInvoices(response.data.data || []);
       setTotals(response.data.totals || {
         total: 0,
@@ -166,11 +164,14 @@ const Invoices = () => {
     return configs[status] || configs.DRAFT;
   };
 
-  const filteredInvoices = invoices.filter((invoice) =>
-    invoice.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.project?.client?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    invoice.project?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredInvoices = invoices.filter((invoice) => {
+    const matchesStatus = statusFilter === 'ALL' || invoice.status === statusFilter;
+    const term = searchTerm.trim().toLowerCase();
+    const matchesSearch = !term || [invoice.number, invoice.project?.client?.name, invoice.project?.name]
+      .some((value) => value?.toLowerCase().includes(term));
+    return matchesStatus && matchesSearch;
+  });
+  const hasActiveFilters = Boolean(searchTerm.trim()) || statusFilter !== 'ALL';
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('en-NG', {
@@ -266,17 +267,19 @@ const Invoices = () => {
         ) : filteredInvoices.length === 0 ? (
           <div className="p-8 text-center bg-white">
             <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
-            <p className="text-slate-500 bg-white">
-              {searchTerm ? 'No invoices match your search' : 'No invoices yet'}
-            </p>
-            <Button
-              variant="outline"
-              className="mt-3 bg-white"
-              onClick={() => setIsWizardOpen(true)}
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create your first invoice
-            </Button>
+            {hasActiveFilters ? (
+              <>
+                <p className="font-medium text-slate-700">No invoices match these filters</p>
+                <p className="mt-1 text-sm text-slate-500">Try changing your search or status filter.</p>
+                <Button variant="outline" className="mt-3 bg-white" onClick={() => { setSearchTerm(''); setStatusFilter('ALL'); }}>Clear filters</Button>
+              </>
+            ) : (
+              <>
+                <p className="font-medium text-slate-700">No invoices yet</p>
+                <p className="mt-1 text-sm text-slate-500">Create an invoice to start tracking what is due and paid.</p>
+                <Button variant="outline" className="mt-3 bg-white" onClick={() => setIsWizardOpen(true)}><Plus className="mr-2 h-4 w-4" />Create your first invoice</Button>
+              </>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto bg-white">
